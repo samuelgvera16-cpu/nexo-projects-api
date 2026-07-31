@@ -1,0 +1,8 @@
+{
+  "project_id": "f4fcac92-2df0-4af7-ac6e-e172982aa67b",
+  "created_by": "f4fcac92-2df0-4af7-ac6e-e172982aa67b",
+  "assigned_to": "35b07409-bf27-4f5c-ae1f-9d0a0ebc8166",
+  "title": "Crear endpoint POST",
+  "description": "Tarea creada desde Express y PostgreSQL",
+  "priority": "high"
+}
