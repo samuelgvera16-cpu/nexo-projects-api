@@ -281,7 +281,7 @@ psql --version
 ### Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/nexo-projects.git
+git clone https://github.com/samuelgvera16-cpu/nexo-projects-api/blob/main/README.md
 cd nexo-projects
 ```
 
