@@ -1,825 +1,462 @@
-# Nexo Projects
+# Nexo Projects API
 
-<p align="center">
-  A full-stack project management platform for small teams to organize projects, members, tasks, priorities, deadlines, and collaboration in one place.
-</p>
+[![CI](https://github.com/samuelgvera16-cpu/nexo-projects-api/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelgvera16-cpu/nexo-projects-api/actions/workflows/ci.yml)
 
-<p align="center">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
-  <img alt="React" src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white">
-  <img alt="Express" src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white">
-  <img alt="Zod" src="https://img.shields.io/badge/Zod-3E67B1?logo=zod&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
-</p>
+REST API for a collaborative project and task management platform.
 
----
+Nexo Projects is being developed as a portfolio project to demonstrate backend development with TypeScript, Express, PostgreSQL, runtime validation, automated testing, and continuous integration.
 
-## Table of Contents
+> **Project status:** Backend foundation in active development. Task CRUD is implemented. Authentication, project endpoints, authorization, and the frontend are planned.
 
-- [Overview](#overview)
-- [The Problem](#the-problem)
-- [Core Features](#core-features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Database Model](#database-model)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Database Setup](#database-setup)
-- [Running the Application](#running-the-application)
-- [API Endpoints](#api-endpoints)
-- [Example Requests](#example-requests)
-- [Technical Decisions](#technical-decisions)
-- [Security Considerations](#security-considerations)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+## Current Features
 
-## Overview
-
-**Nexo Projects** is a full-stack project management application built for small teams, agencies, freelancers, and growing businesses.
-
-It provides a central workspace where users can create projects, manage members, assign tasks, define priorities, track progress, set deadlines, and discuss work through comments.
-
-The project is designed as a production-oriented portfolio application rather than a basic CRUD demo. It demonstrates typed frontend and backend development, REST API design, relational database modeling, request validation, centralized error handling, authorization-ready architecture, and persistent PostgreSQL storage.
-
-## The Problem
-
-Small teams often manage work across disconnected tools such as spreadsheets, messaging apps, email threads, and personal notes. This creates several problems:
-
-- Tasks are forgotten or duplicated.
-- Responsibilities are unclear.
-- Project progress is difficult to measure.
-- Important decisions are lost in chat messages.
-- Deadlines are not visible to the whole team.
-- Access permissions become difficult to control as the team grows.
-
-Nexo Projects solves this by keeping project data, team membership, tasks, priorities, statuses, deadlines, and comments in one structured system.
-
-## Core Features
-
-### Implemented foundation
-
-- Create, read, update, and delete tasks.
-- Store data persistently in PostgreSQL.
-- Validate request bodies and URL parameters with Zod.
-- Use UUID identifiers for database entities.
-- Organize backend code into routes, controllers, services, and middleware.
-- Return consistent HTTP status codes and JSON error responses.
-- Protect database queries with parameterized SQL.
-- Manage projects, members, tasks, and comments through a relational schema.
-
-### Planned application features
-
-- User registration and sign-in.
-- Project creation and ownership.
-- Project member invitations.
-- Role-based permissions: `owner`, `admin`, and `member`.
-- Task assignment, status, priority, and due dates.
-- Project task filtering and search.
-- Task comments and activity history.
-- Dashboard statistics.
-- Kanban board.
-- Notifications and real-time updates.
+- Task creation, retrieval, update, and deletion.
+- PostgreSQL persistence and relational constraints.
+- Request validation with Zod.
+- UUID route-parameter validation.
+- Parameterized SQL queries.
+- Centralized application error handling.
+- PostgreSQL constraint error mapping.
+- Environment-variable validation.
+- Graceful server and database shutdown.
+- Reproducible database schema.
+- Safe demonstration data.
+- Automated API validation tests.
+- Automated CI checks with GitHub Actions.
 
 ## Tech Stack
 
-### Frontend
-
-- [React](https://react.dev/) — component-based user interface.
-- [TypeScript](https://www.typescriptlang.org/) — static typing across the application.
-- [Vite](https://vite.dev/) — frontend development and build tooling.
-- [React Router](https://reactrouter.com/) — client-side routing.
-- [TanStack Query](https://tanstack.com/query/latest) — server-state fetching, caching, and synchronization.
-
-### Backend
-
-- [Node.js](https://nodejs.org/) — JavaScript runtime.
-- [Express](https://expressjs.com/) — REST API framework.
-- [TypeScript](https://www.typescriptlang.org/) — typed backend development.
-- [Zod](https://zod.dev/) — runtime validation for request bodies and route parameters.
-- [node-postgres](https://node-postgres.com/) — PostgreSQL driver and connection pooling.
-- [dotenv](https://github.com/motdotla/dotenv) — environment variable loading.
-
-### Database and tooling
-
-- [PostgreSQL](https://www.postgresql.org/) — relational database.
-- [pgAdmin](https://www.pgadmin.org/) — PostgreSQL administration.
-- [Git](https://git-scm.com/) — source control.
-- [ESLint](https://eslint.org/) — code-quality checks.
-- [Prettier](https://prettier.io/) — consistent formatting.
+- Node.js
+- TypeScript
+- Express
+- PostgreSQL
+- node-postgres
+- Zod
+- Vitest
+- Supertest
+- GitHub Actions
 
 ## Architecture
 
-The application uses a separated frontend and backend architecture.
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                         Web Browser                          │
-│                                                              │
-│                    React + TypeScript                        │
-│  Pages → Components → Hooks → API client → TanStack Query   │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                               │ HTTPS / JSON
-                               ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    Express REST API                          │
-│                                                              │
-│  Routes                                                      │
-│    ↓                                                         │
-│  Validation middleware (Zod)                                 │
-│    ↓                                                         │
-│  Controllers                                                 │
-│    ↓                                                         │
-│  Services / business rules                                   │
-│    ↓                                                         │
-│  PostgreSQL connection pool                                  │
-│                                                              │
-│  Errors → centralized error middleware → JSON response       │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                               │ Parameterized SQL
-                               ▼
-┌──────────────────────────────────────────────────────────────┐
-│                         PostgreSQL                           │
-│                                                              │
-│  users                                                       │
-│  projects                                                    │
-│  project_members                                             │
-│  tasks                                                       │
-│  comments                                                    │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Backend request flow
+Requests move through separate application layers:
 
 ```text
 HTTP request
-    │
-    ▼
-Route
-    │
-    ▼
-Zod validation
-    │
-    ▼
-Controller
-    │
-    ▼
-Service
-    │
-    ▼
+    |
+    v
+Routes
+    |
+    v
+Validation middleware
+    |
+    v
+Controllers
+    |
+    v
+Services
+    |
+    v
 PostgreSQL
-    │
-    ▼
-JSON response
 ```
 
-## Database Model
+Responsibilities:
 
-```text
-USERS
-  id PK
-  │
-  ├──────────── owns ────────────────┐
-  │                                  ▼
-  │                              PROJECTS
-  │                                  │
-  │                                  │ contains
-  │                                  ▼
-  │                                TASKS
-  │                                  │
-  │                                  │ has
-  │                                  ▼
-  └──────── writes ─────────────── COMMENTS
-
-USERS ─────< PROJECT_MEMBERS >───── PROJECTS
-
-USERS ───── creates / receives ──── TASKS
-```
-
-### Main relationships
-
-- One user can own many projects.
-- Users and projects have a many-to-many relationship through `project_members`.
-- One project can contain many tasks.
-- One user can create many tasks.
-- One user can be assigned many tasks.
-- One task can have many comments.
-- One user can write many comments.
+- **Routes** define HTTP methods and paths.
+- **Middleware** validates input and handles errors.
+- **Controllers** translate HTTP requests into service calls.
+- **Services** contain database operations.
+- **PostgreSQL** enforces relational integrity and constraints.
 
 ## Project Structure
 
-A recommended monorepo-style structure is shown below:
-
 ```text
-nexo-projects/
-├── client/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── pages/
-│   │   ├── routes/
-│   │   ├── types/
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── server/
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── database.ts
-│   │   ├── controllers/
-│   │   ├── errors/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── app.ts
-│   │   └── server.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
+nexo-projects-api/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── database/
 │   ├── schema.sql
 │   └── seed.sql
-│
-├── .gitignore
+├── src/
+│   ├── config/
+│   │   ├── database.ts
+│   │   └── env.ts
+│   ├── controllers/
+│   │   └── task.controller.ts
+│   ├── errors/
+│   │   └── AppError.ts
+│   ├── middleware/
+│   │   ├── errorHandler.ts
+│   │   └── validate.ts
+│   ├── models/
+│   │   └── task.ts
+│   ├── routes/
+│   │   └── task.routes.ts
+│   ├── schemas/
+│   │   └── task.schema.ts
+│   ├── services/
+│   │   └── task.service.ts
+│   ├── app.ts
+│   └── server.ts
+├── tests/
+│   └── app.test.ts
+├── .env.example
 ├── LICENSE
-└── README.md
+├── package.json
+├── tsconfig.json
+└── vitest.config.ts
 ```
 
-The current backend can also remain in a separate `todo-api` repository while the frontend is developed in its own repository.
+## Requirements
 
-## Getting Started
+Install these tools before running the project:
 
-### Prerequisites
+- Node.js 24 or later
+- npm
+- PostgreSQL
+- Git
 
-Install the following software before continuing:
+## Local Setup
 
-- [Node.js](https://nodejs.org/) LTS or newer.
-- npm, included with Node.js.
-- [PostgreSQL](https://www.postgresql.org/download/).
-- [Git](https://git-scm.com/).
-- [Visual Studio Code](https://code.visualstudio.com/) or another editor.
-
-Verify the installation:
+### 1. Clone the repository
 
 ```bash
-node --version
-npm --version
-git --version
-psql --version
+git clone https://github.com/samuelgvera16-cpu/nexo-projects-api.git
+cd nexo-projects-api
 ```
 
-### Clone the repository
+### 2. Install dependencies
 
 ```bash
-git clone https://github.com/samuelgvera16-cpu/nexo-projects-api/blob/main/README.md
-cd nexo-projects
-```
-
-Replace `YOUR_USERNAME` with the GitHub account that owns the repository.
-
-### Install backend dependencies
-
-```bash
-cd server
 npm install
 ```
 
-### Install frontend dependencies
+### 3. Create the environment file
 
-Open another terminal:
+Windows PowerShell:
 
-```bash
-cd client
-npm install
+```powershell
+Copy-Item .env.example .env
 ```
 
-## Environment Variables
+macOS or Linux:
 
-Create a `.env` file inside `server/`:
+```bash
+cp .env.example .env
+```
+
+Update `.env` with your local PostgreSQL credentials:
 
 ```env
+NODE_ENV=development
 PORT=3000
 
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=your_local_postgres_password
-DB_NAME=project_manager
-
-CLIENT_ORIGIN=http://localhost:5173
+DB_PASSWORD=your_postgres_password
+DB_NAME=nexo_projects
 ```
 
-Do not commit `.env`.
+Never commit `.env` or real credentials.
 
-The repository should include a safe template named `.env.example`:
+### 4. Create the database
 
-```env
-PORT=3000
-
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=
-DB_NAME=project_manager
-
-CLIENT_ORIGIN=http://localhost:5173
-```
-
-Recommended `.gitignore` entries:
-
-```gitignore
-node_modules/
-dist/
-.env
-*.log
-```
-
-## Database Setup
-
-### 1. Create the database
-
-Using pgAdmin or `psql`:
+Using PostgreSQL:
 
 ```sql
-CREATE DATABASE project_manager;
+CREATE DATABASE nexo_projects;
 ```
 
-Connect to it:
+### 5. Create the schema
+
+Using `psql`:
 
 ```bash
-psql -U postgres -d project_manager
+psql -U postgres -d nexo_projects -f database/schema.sql
 ```
 
-### 2. Enable UUID generation
+You can also open `database/schema.sql` in pgAdmin Query Tool and execute it against the `nexo_projects` database.
 
-```sql
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-```
+The schema creates:
 
-### 3. Create the schema
+- `users`
+- `projects`
+- `project_members`
+- `tasks`
+- `comments`
 
-Run the schema file:
+### 6. Load demonstration data
+
+Using `psql`:
 
 ```bash
-psql -U postgres -d project_manager -f database/schema.sql
+psql -U postgres -d nexo_projects -f database/seed.sql
 ```
 
-The schema should create:
+The seed contains local demonstration records only. Authentication is not implemented yet, so its password hashes are deliberately unusable placeholders.
 
-```text
-users
-projects
-project_members
-tasks
-comments
-```
-
-### 4. Optional seed data
+### 7. Start development mode
 
 ```bash
-psql -U postgres -d project_manager -f database/seed.sql
-```
-
-### 5. Confirm the tables
-
-```sql
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-```
-
-Expected result:
-
-```text
-comments
-project_members
-projects
-tasks
-users
-```
-
-## Running the Application
-
-### Start the backend
-
-```bash
-cd server
 npm run dev
 ```
 
-Expected output:
+The API will be available at:
 
 ```text
-PostgreSQL connected
-Server running at http://localhost:3000
+http://localhost:3000
 ```
 
-### Start the frontend
-
-In another terminal:
+## Available Scripts
 
 ```bash
-cd client
 npm run dev
 ```
 
-Open the URL shown by Vite, normally:
-
-```text
-http://localhost:5173
-```
-
-### Production builds
-
-Backend:
+Starts the TypeScript development server in watch mode.
 
 ```bash
-cd server
+npm run typecheck
+```
+
+Checks TypeScript without generating files.
+
+```bash
 npm run build
+```
+
+Compiles `src` into `dist`.
+
+```bash
 npm start
 ```
 
-Frontend:
+Runs the compiled application from `dist`.
 
 ```bash
-cd client
-npm run build
-npm run preview
+npm test
 ```
+
+Runs the automated test suite once.
+
+```bash
+npm run test:watch
+```
+
+Runs tests in watch mode.
 
 ## API Endpoints
 
-Current task endpoints:
-
 | Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/tasks` | Return all tasks |
-| `GET` | `/tasks/:id` | Return one task by UUID |
-| `POST` | `/tasks` | Create a task |
-| `PUT` | `/tasks/:id` | Update a task |
-| `DELETE` | `/tasks/:id` | Delete a task |
+| --- | --- | --- |
+| `GET` | `/` | Returns API information |
+| `GET` | `/tasks` | Returns all tasks |
+| `GET` | `/tasks/:id` | Returns one task |
+| `POST` | `/tasks` | Creates a task |
+| `PUT` | `/tasks/:id` | Updates selected task fields |
+| `DELETE` | `/tasks/:id` | Deletes a task |
 
-Planned resource endpoints:
+## Request Examples
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/auth/register` | Create a user account |
-| `POST` | `/auth/login` | Authenticate a user |
-| `GET` | `/projects` | Return projects visible to the user |
-| `POST` | `/projects` | Create a project |
-| `GET` | `/projects/:id` | Return project details |
-| `PUT` | `/projects/:id` | Update a project |
-| `DELETE` | `/projects/:id` | Delete a project |
-| `GET` | `/projects/:id/members` | Return project members |
-| `POST` | `/projects/:id/members` | Add a project member |
-| `GET` | `/tasks/:id/comments` | Return task comments |
-| `POST` | `/tasks/:id/comments` | Create a task comment |
-
-## Example Requests
-
-The examples use `curl.exe`, which works consistently in Windows PowerShell.
+The seed file creates known UUID values that can be used locally.
 
 ### Get all tasks
 
 ```powershell
-curl.exe "http://localhost:3000/tasks"
+Invoke-RestMethod -Uri "http://localhost:3000/tasks"
 ```
 
-### Get one task
+### Get one demonstration task
 
 ```powershell
-curl.exe "http://localhost:3000/tasks/TASK_UUID"
+Invoke-RestMethod -Uri "http://localhost:3000/tasks/30000000-0000-4000-8000-000000000001"
 ```
 
 ### Create a task
 
-Create `body.json`:
-
-```json
-{
-  "project_id": "PROJECT_UUID",
-  "created_by": "USER_UUID",
-  "assigned_to": "USER_UUID",
-  "title": "Build the project dashboard",
-  "description": "Create the first version of the project overview page.",
-  "priority": "high"
-}
-```
-
-Send the request:
-
 ```powershell
-curl.exe -X POST "http://localhost:3000/tasks" `
-  -H "Content-Type: application/json" `
-  --data-binary "@body.json"
+$taskBody = @{
+  project_id = "20000000-0000-4000-8000-000000000001"
+  created_by = "10000000-0000-4000-8000-000000000001"
+  assigned_to = "10000000-0000-4000-8000-000000000002"
+  title = "Review the API documentation"
+  description = "Confirm that setup instructions work from a clean environment."
+  priority = "high"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:3000/tasks" `
+  -ContentType "application/json" `
+  -Body $taskBody
 ```
 
 ### Update a task
 
-Create `update.json`:
+```powershell
+$updateBody = @{
+  status = "completed"
+  priority = "urgent"
+} | ConvertTo-Json
 
-```json
-{
-  "title": "Finish the project dashboard",
-  "status": "completed",
-  "priority": "urgent"
-}
+Invoke-RestMethod `
+  -Method Put `
+  -Uri "http://localhost:3000/tasks/30000000-0000-4000-8000-000000000001" `
+  -ContentType "application/json" `
+  -Body $updateBody
 ```
 
-Send the request:
+Nullable fields can be cleared explicitly:
 
 ```powershell
-curl.exe -X PUT "http://localhost:3000/tasks/TASK_UUID" `
-  -H "Content-Type: application/json" `
-  --data-binary "@update.json"
+$clearDescription = @{
+  description = $null
+} | ConvertTo-Json
 ```
 
 ### Delete a task
 
 ```powershell
-curl.exe -i -X DELETE "http://localhost:3000/tasks/TASK_UUID"
+Invoke-RestMethod `
+  -Method Delete `
+  -Uri "http://localhost:3000/tasks/TASK_UUID"
 ```
 
-A successful deletion returns:
+A successful deletion returns `204 No Content`.
 
-```text
-HTTP/1.1 204 No Content
-```
+## Validation and Error Responses
 
-### Test invalid UUID validation
-
-```powershell
-curl.exe -i "http://localhost:3000/tasks/not-a-valid-uuid"
-```
-
-Expected response:
+Invalid request data returns `400 Bad Request`:
 
 ```json
 {
-  "message": "Invalid parameters",
-  "errors": [
-    {
-      "message": "The ID must be a valid UUID"
-    }
-  ]
+  "message": "Datos inválidos",
+  "errors": []
 }
 ```
 
-## Technical Decisions
+Unknown resources return `404 Not Found`:
 
-### TypeScript across the full stack
+```json
+{
+  "message": "Tarea no encontrada"
+}
+```
 
-TypeScript is used in both the frontend and backend to reduce mismatches between components, request payloads, service functions, and database models.
+Duplicate resources return `409 Conflict` when a database uniqueness constraint is violated.
 
-Benefits include:
+Unexpected internal errors return a generic response without exposing PostgreSQL details:
 
-- Earlier error detection.
-- Safer refactoring.
-- Better editor assistance.
-- Explicit API and domain models.
-- Easier sharing of common types in a monorepo.
+```json
+{
+  "message": "Error interno del servidor"
+}
+```
 
-### PostgreSQL instead of in-memory storage
+## Testing
 
-The first API version used an array for learning purposes. PostgreSQL replaces that temporary storage so data survives server restarts and relational constraints are enforced.
+The current test suite verifies:
 
-PostgreSQL was selected because the domain contains strong relationships:
+- Root endpoint response.
+- Unknown-route handling.
+- Invalid UUID rejection.
+- Empty-update rejection.
+- Malformed JSON handling.
 
-- Users belong to projects.
-- Projects contain tasks.
-- Tasks have creators and assignees.
-- Tasks contain comments.
+Run it with:
 
-### UUID primary keys
+```bash
+npm test
+```
 
-Entities use UUID values generated by PostgreSQL with `gen_random_uuid()`.
+Database integration tests will be added in a later phase.
 
-UUIDs avoid exposing predictable sequential IDs and work well when records may eventually be generated across multiple services or environments.
+## Continuous Integration
 
-### Layered backend architecture
-
-The backend follows this flow:
+GitHub Actions runs the following checks on every push and pull request:
 
 ```text
-routes → validation → controllers → services → PostgreSQL
+npm ci
+npm run typecheck
+npm test
+npm run build
 ```
 
-Responsibilities are separated:
+The CI badge at the top of this README shows the current workflow status.
 
-- **Routes** connect HTTP methods and paths to handlers.
-- **Middleware** validates and transforms requests.
-- **Controllers** translate HTTP requests into service calls.
-- **Services** contain business logic and database operations.
-- **Error middleware** creates consistent error responses.
+## Security Notes
 
-This prevents route files and controllers from becoming large, tightly coupled modules.
+Implemented:
 
-### Runtime validation with Zod
+- Parameterized SQL queries.
+- Runtime request validation.
+- Environment-variable validation.
+- Generic internal error responses.
+- Ignored local `.env` files.
 
-TypeScript types disappear at runtime. External clients can still send invalid data.
+Required before production deployment:
 
-Zod validates:
-
-- Request bodies.
-- UUID route parameters.
-- Status values.
-- Priority values.
-- Required and optional fields.
-
-Only validated input reaches controllers and PostgreSQL.
-
-### Parameterized SQL
-
-Database queries use placeholders:
-
-```sql
-SELECT *
-FROM tasks
-WHERE id = $1;
-```
-
-Values are passed separately:
-
-```ts
-await pool.query(query, [id]);
-```
-
-This avoids unsafe string concatenation and reduces SQL injection risk.
-
-### PostgreSQL connection pool
-
-The backend uses `Pool` from `pg` instead of creating a new database connection for every request.
-
-Connection pooling improves resource usage and supports concurrent requests more efficiently.
-
-### Centralized error handling
-
-Controllers throw application errors instead of duplicating response logic:
-
-```ts
-throw new AppError("Task not found", 404);
-```
-
-The error middleware converts errors into consistent JSON responses.
-
-It also handles malformed JSON and unexpected server errors.
-
-### Database constraints
-
-Important rules are enforced at the database level:
-
-- Unique user email addresses.
-- Valid foreign-key references.
-- Valid project roles.
-- Valid task statuses.
-- Valid task priorities.
-- Cascading deletion for dependent project data.
-- Nullable task assignees with `ON DELETE SET NULL`.
-
-Application validation improves error messages, while database constraints preserve data integrity.
-
-### Index strategy
-
-Indexes support common access patterns:
-
-- Projects by owner.
-- Projects by member.
-- Tasks by project.
-- Tasks by assignee.
-- Tasks by project and status.
-- Tasks by due date.
-- Tasks by assignee and status.
-- Comments by task and creation date.
-
-Indexes are added for real query patterns rather than every column, because unnecessary indexes increase storage usage and write cost.
-
-### HTTP status codes
-
-The API uses standard semantics:
-
-- `200 OK` for successful reads and updates.
-- `201 Created` after creating a resource.
-- `204 No Content` after deleting a resource.
-- `400 Bad Request` for invalid input.
-- `404 Not Found` for missing resources.
-- `500 Internal Server Error` for unexpected failures.
-
-## Security Considerations
-
-The current project foundation includes validation and parameterized SQL, but production deployment should also add:
-
-- Password hashing with Argon2 or bcrypt.
-- Authentication using secure HttpOnly cookies.
-- Role-based authorization checks.
-- CORS restricted to approved origins.
+- Password hashing.
+- Authentication with secure cookies.
+- Project membership authorization.
+- Role-based permissions.
 - Rate limiting.
-- Helmet security headers.
-- Request body size limits.
-- Input normalization.
-- Secure production secrets.
+- CORS restrictions.
+- Security headers.
+- Request-size limits.
+- Production secret management.
 - HTTPS.
-- Database users with minimum required permissions.
-- Audit logs for sensitive actions.
-
-Never commit real database passwords, tokens, or production credentials.
 
 ## Roadmap
 
-### Phase 1 — Backend foundation
+### Backend foundation
 
-- [x] Express and TypeScript setup.
-- [x] PostgreSQL connection.
-- [x] Relational database schema.
-- [x] Task CRUD.
-- [x] Zod request validation.
-- [x] UUID parameter validation.
-- [x] Centralized error handling.
-- [x] Parameterized SQL queries.
+- [x] Express and TypeScript setup
+- [x] PostgreSQL connection
+- [x] Relational database schema
+- [x] Demonstration seed data
+- [x] Task CRUD
+- [x] Zod validation
+- [x] Centralized error handling
+- [x] Automated validation tests
+- [x] GitHub Actions CI
 
-### Phase 2 — Core project management
+### Core domain
 
-- [ ] User CRUD.
-- [ ] Project CRUD.
-- [ ] Project membership management.
-- [ ] Comment CRUD.
-- [ ] Project-specific task endpoints.
-- [ ] Pagination, filtering, sorting, and search.
+- [ ] User endpoints
+- [ ] Project endpoints
+- [ ] Project membership endpoints
+- [ ] Comment endpoints
+- [ ] Task pagination, filtering, sorting, and search
+- [ ] Database integration tests
 
-### Phase 3 — Authentication and authorization
+### Authentication and authorization
 
-- [ ] User registration.
-- [ ] Sign-in and sign-out.
-- [ ] Password hashing.
-- [ ] HttpOnly session or access cookies.
-- [ ] Owner, admin, and member authorization.
-- [ ] Protected frontend routes.
+- [ ] User registration
+- [ ] Sign in and sign out
+- [ ] Password hashing
+- [ ] Secure authentication cookies
+- [ ] Owner, admin, and member permissions
 
-### Phase 4 — Frontend
+### Full-stack application
 
-- [ ] Authentication pages.
-- [ ] Project list and detail pages.
-- [ ] Task creation and editing forms.
-- [ ] Task filters.
-- [ ] Project member interface.
-- [ ] Comments interface.
-- [ ] Dashboard metrics.
-- [ ] Loading, empty, and error states.
+- [ ] React frontend
+- [ ] Authentication pages
+- [ ] Project dashboard
+- [ ] Task forms and filters
+- [ ] Kanban board
+- [ ] Comments interface
+- [ ] Responsive design
 
-### Phase 5 — Advanced capabilities
+### Production readiness
 
-- [ ] Kanban board.
-- [ ] File attachments.
-- [ ] Notifications.
-- [ ] Activity history.
-- [ ] Real-time updates with WebSockets.
-- [ ] Automated tests.
-- [ ] OpenAPI documentation.
-- [ ] Docker development environment.
-- [ ] Continuous integration.
-- [ ] Cloud deployment.
-
-## Contributing
-
-Contributions, bug reports, and suggestions are welcome.
-
-1. Fork the repository.
-2. Create a branch:
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-3. Commit your changes:
-
-```bash
-git commit -m "Add your feature"
-```
-
-4. Push the branch:
-
-```bash
-git push origin feature/your-feature-name
-```
-
-5. Open a pull request.
+- [ ] OpenAPI documentation
+- [ ] Docker development environment
+- [ ] Rate limiting and security headers
+- [ ] Application logging
+- [ ] Cloud deployment
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-<p align="center">
-  Built with React, TypeScript, Express, and PostgreSQL.
-</p>
+This project is available under the [MIT License](LICENSE).
