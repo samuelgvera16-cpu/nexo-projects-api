@@ -14,26 +14,15 @@ import {
   updateTaskSchema,
 } from "../schemas/task.schema.js";
 
-import {
-  validateBody,
-  validateParams,
-} from "../middleware/validate.js";
+import { validateBody, validateParams } from "../middleware/validate.js";
 
 const router = Router();
 
 router.get("/", getTasks);
 
-router.get(
-  "/:id",
-  validateParams(taskIdParamSchema),
-  getTask
-);
+router.get("/:id", validateParams(taskIdParamSchema), getTask);
 
-router.post(
-  "/",
-  validateBody(createTaskSchema),
-  createNewTask
-);
+router.post("/", validateBody(createTaskSchema), createNewTask);
 
 router.put(
   "/:id",
@@ -42,10 +31,6 @@ router.put(
   updateExistingTask
 );
 
-router.delete(
-  "/:id",
-  validateParams(taskIdParamSchema),
-  deleteExistingTask
-);
+router.delete("/:id", validateParams(taskIdParamSchema), deleteExistingTask);
 
 export default router;

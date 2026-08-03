@@ -14,19 +14,13 @@ type TaskParams = {
   id: string;
 };
 
-export async function getTasks(
-  req: Request,
-  res: Response
-) {
+export async function getTasks(req: Request, res: Response) {
   const tasks = await getAllTasks();
 
   return res.json(tasks);
 }
 
-export async function getTask(
-  req: Request<TaskParams>,
-  res: Response
-) {
+export async function getTask(req: Request<TaskParams>, res: Response) {
   const id = req.params.id;
 
   const task = await getTaskById(id);
@@ -38,10 +32,7 @@ export async function getTask(
   return res.json(task);
 }
 
-export async function createNewTask(
-  req: Request,
-  res: Response
-) {
+export async function createNewTask(req: Request, res: Response) {
   const task = await createTask(req.body);
 
   return res.status(201).json(task);

@@ -2,10 +2,7 @@ import express from "express";
 
 import taskRoutes from "./routes/task.routes.js";
 
-import {
-  errorHandler,
-  notFoundHandler,
-} from "./middleware/errorHandler.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 

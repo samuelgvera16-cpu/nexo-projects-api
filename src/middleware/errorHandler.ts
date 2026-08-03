@@ -1,7 +1,4 @@
-import type {
-  ErrorRequestHandler,
-  RequestHandler,
-} from "express";
+import type { ErrorRequestHandler, RequestHandler } from "express";
 
 import { AppError } from "../errors/AppError.js";
 
@@ -39,9 +36,7 @@ const postgresErrorResponses: Record<string, ErrorResponse> = {
 
 function isPostgresError(error: unknown): error is PostgresError {
   return (
-    error instanceof Error &&
-    "code" in error &&
-    typeof error.code === "string"
+    error instanceof Error && "code" in error && typeof error.code === "string"
   );
 }
 
@@ -51,12 +46,7 @@ export const notFoundHandler: RequestHandler = (req, res) => {
   });
 };
 
-export const errorHandler: ErrorRequestHandler = (
-  error,
-  _req,
-  res,
-  _next
-) => {
+export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
       message: error.message,
