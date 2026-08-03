@@ -1,15 +1,22 @@
 {
-  "name": "todo-api",
+  "name": "nexo-projects-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "REST API for a collaborative project and task management platform.",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts"
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "typescript",
+    "express",
+    "postgresql",
+    "rest-api",
+    "project-management"
+  ],
+  "author": "Samuel Vera",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "dotenv": "^17.4.2",
