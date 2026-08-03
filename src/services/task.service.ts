@@ -96,15 +96,24 @@ export async function updateTask(
   id: string,
   data: UpdateTaskInput
 ): Promise<Task | undefined> {
+  const hasDescription = Object.hasOwn(data, "description");
+  const hasAssignedTo = Object.hasOwn(data, "assigned_to");
+
   const result = await pool.query<Task>(
     `
     UPDATE tasks
     SET
       title = COALESCE($2, title),
-      description = COALESCE($3, description),
-      assigned_to = COALESCE($4, assigned_to),
-      status = COALESCE($5, status),
-      priority = COALESCE($6, priority),
+      description = CASE
+        WHEN $3::boolean THEN $4::text
+        ELSE description
+      END,
+      assigned_to = CASE
+        WHEN $5::boolean THEN $6::uuid
+        ELSE assigned_to
+      END,
+      status = COALESCE($7, status),
+      priority = COALESCE($8, priority),
       updated_at = NOW()
     WHERE id = $1
     RETURNING *
@@ -112,7 +121,9 @@ export async function updateTask(
     [
       id,
       data.title ?? null,
+      hasDescription,
       data.description ?? null,
+      hasAssignedTo,
       data.assigned_to ?? null,
       data.status ?? null,
       data.priority ?? null,
