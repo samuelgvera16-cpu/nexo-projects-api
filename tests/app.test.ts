@@ -4,6 +4,28 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("rejects registration with a short password", async () => {
+    const response = await request(app).post("/auth/register").send({
+      name: "Samuel Vera",
+      email: "samuel@example.com",
+      password: "short",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Datos inválidos");
+  });
+
+  it("rejects privilege injection during registration", async () => {
+    const response = await request(app).post("/auth/register").send({
+      name: "Samuel Vera",
+      email: "samuel@example.com",
+      password: "a secure passphrase",
+      role: "admin",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Datos inválidos");
+  });
   it("returns API information from the root route", async () => {
     const response = await request(app).get("/");
 

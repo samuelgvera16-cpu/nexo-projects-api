@@ -4,6 +4,8 @@ import taskRoutes from "./routes/task.routes.js";
 
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
+import authRoutes from "./routes/auth.routes.js";
+
 const app = express();
 
 app.use(express.json());
@@ -15,6 +17,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/auth", authRoutes);
 app.use("/tasks", taskRoutes);
 
 // Deben ir DESPUÉS de las rutas
