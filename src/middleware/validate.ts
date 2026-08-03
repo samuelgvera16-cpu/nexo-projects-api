@@ -14,7 +14,7 @@ export function validateBody(schema: ZodType) {
 
     req.body = result.data;
 
-    next();
+    return next();
   };
 }
 export function validateParams(schema: ZodType) {
@@ -30,6 +30,6 @@ export function validateParams(schema: ZodType) {
 
     req.params = result.data as typeof req.params;
 
-    next();
+    return next();
   };
 }
