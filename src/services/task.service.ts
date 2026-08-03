@@ -56,9 +56,7 @@ interface CreateTaskInput {
   priority?: "low" | "medium" | "high" | "urgent";
 }
 
-export async function createTask(
-  data: CreateTaskInput
-): Promise<Task> {
+export async function createTask(data: CreateTaskInput): Promise<Task> {
   const result = await pool.query<Task>(
     `
     INSERT INTO tasks (

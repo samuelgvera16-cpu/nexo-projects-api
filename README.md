@@ -248,14 +248,14 @@ Runs tests in watch mode.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/` | Returns API information |
-| `GET` | `/tasks` | Returns all tasks |
-| `GET` | `/tasks/:id` | Returns one task |
-| `POST` | `/tasks` | Creates a task |
-| `PUT` | `/tasks/:id` | Updates selected task fields |
-| `DELETE` | `/tasks/:id` | Deletes a task |
+| Method   | Endpoint     | Description                  |
+| -------- | ------------ | ---------------------------- |
+| `GET`    | `/`          | Returns API information      |
+| `GET`    | `/tasks`     | Returns all tasks            |
+| `GET`    | `/tasks/:id` | Returns one task             |
+| `POST`   | `/tasks`     | Creates a task               |
+| `PUT`    | `/tasks/:id` | Updates selected task fields |
+| `DELETE` | `/tasks/:id` | Deletes a task               |
 
 ## Request Examples
 
