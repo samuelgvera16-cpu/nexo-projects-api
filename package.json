@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "REST API for a collaborative project and task management platform.",
   "main": "dist/server.js",
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts",
-    "typecheck": "tsc --noEmit"
-  },
+"scripts": {
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "typecheck": "tsc --noEmit"
+},
   "keywords": [
     "typescript",
     "express",
