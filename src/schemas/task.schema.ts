@@ -34,7 +34,12 @@ export const updateTaskSchema = z.object({
   priority: z
     .enum(["low", "medium", "high", "urgent"])
     .optional(),
-});
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  {
+    message: "Debes proporcionar al menos un campo para actualizar",
+  }
+);
 export const taskIdParamSchema = z.object({
   id: z.uuid("El ID debe ser un UUID válido"),
 });
