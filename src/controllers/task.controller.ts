@@ -10,8 +10,10 @@ import {
 
 import { AppError } from "../errors/AppError.js";
 
-import { userHasProjectAccess } from "../services/project-access.service.js";
-
+import {
+  getUserProjectRole,
+  userHasProjectAccess,
+} from "../services/project-access.service.js";
 type TaskParams = {
   id: string;
 };
@@ -120,6 +122,18 @@ export async function deleteExistingTask(
   }
 
   const id = req.params.id;
+
+  const task = await getTaskById(id, req.user.id);
+
+  if (!task) {
+    throw new AppError("Tarea no encontrada", 404);
+  }
+
+  const role = await getUserProjectRole(req.user.id, task.project_id);
+
+  if (role !== "owner" && role !== "admin") {
+    throw new AppError("No tienes permiso para eliminar esta tarea", 403);
+  }
 
   const deleted = await deleteTask(id, req.user.id);
 
