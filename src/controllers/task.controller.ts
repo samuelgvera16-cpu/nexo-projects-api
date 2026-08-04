@@ -56,6 +56,17 @@ export async function createNewTask(req: Request, res: Response) {
     throw new AppError("Proyecto no encontrado", 404);
   }
 
+  if (req.body.assigned_to) {
+    const assigneeHasProjectAccess = await userHasProjectAccess(
+      req.body.assigned_to,
+      req.body.project_id
+    );
+
+    if (!assigneeHasProjectAccess) {
+      throw new AppError("El usuario asignado no pertenece al proyecto", 400);
+    }
+  }
+
   const task = await createTask({
     ...req.body,
     created_by: req.user.id,
@@ -73,6 +84,23 @@ export async function updateExistingTask(
   }
 
   const id = req.params.id;
+
+  if (Object.hasOwn(req.body, "assigned_to") && req.body.assigned_to !== null) {
+    const existingTask = await getTaskById(id, req.user.id);
+
+    if (!existingTask) {
+      throw new AppError("Tarea no encontrada", 404);
+    }
+
+    const assigneeHasProjectAccess = await userHasProjectAccess(
+      req.body.assigned_to,
+      existingTask.project_id
+    );
+
+    if (!assigneeHasProjectAccess) {
+      throw new AppError("El usuario asignado no pertenece al proyecto", 400);
+    }
+  }
 
   const task = await updateTask(id, req.body, req.user.id);
 

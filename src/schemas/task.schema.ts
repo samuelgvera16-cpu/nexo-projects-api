@@ -33,6 +33,7 @@ export const updateTaskSchema = z
 
     priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   })
+  .strict()
   .refine((data) => Object.keys(data).length > 0, {
     message: "Debes proporcionar al menos un campo para actualizar",
   });
