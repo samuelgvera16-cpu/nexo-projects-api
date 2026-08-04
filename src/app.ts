@@ -4,9 +4,15 @@ import taskRoutes from "./routes/task.routes.js";
 
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
+import authRoutes from "./routes/auth.routes.js";
+
+import cookieParser from "cookie-parser";
+
 const app = express();
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.json({
@@ -15,6 +21,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/auth", authRoutes);
 app.use("/tasks", taskRoutes);
 
 // Deben ir DESPUÉS de las rutas

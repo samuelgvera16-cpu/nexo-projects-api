@@ -1,48 +1,79 @@
 import type { Task } from "../models/task.js";
 import { pool } from "../config/database.js";
 
-export async function getAllTasks(): Promise<Task[]> {
+export async function getAllTasks(userId: string): Promise<Task[]> {
   const result = await pool.query<Task>(
     `
-    SELECT
-      id,
-      project_id,
-      assigned_to,
-      created_by,
-      title,
-      description,
-      status,
-      priority,
-      due_date,
-      created_at,
-      updated_at
-    FROM tasks
-    ORDER BY created_at DESC
-    `
+      SELECT
+        id,
+        project_id,
+        assigned_to,
+        created_by,
+        title,
+        description,
+        status,
+        priority,
+        due_date,
+        created_at,
+        updated_at
+      FROM tasks
+      WHERE EXISTS (
+        SELECT 1
+        FROM projects AS project
+        WHERE project.id = tasks.project_id
+          AND (
+            project.owner_id = $1
+            OR EXISTS (
+              SELECT 1
+              FROM project_members AS member
+              WHERE member.project_id = project.id
+                AND member.user_id = $1
+            )
+          )
+      )
+      ORDER BY created_at DESC
+    `,
+    [userId]
   );
 
   return result.rows;
 }
-
-export async function getTaskById(id: string): Promise<Task | undefined> {
+export async function getTaskById(
+  id: string,
+  userId: string
+): Promise<Task | undefined> {
   const result = await pool.query<Task>(
     `
-    SELECT
-      id,
-      project_id,
-      assigned_to,
-      created_by,
-      title,
-      description,
-      status,
-      priority,
-      due_date,
-      created_at,
-      updated_at
-    FROM tasks
-    WHERE id = $1
+      SELECT
+        id,
+        project_id,
+        assigned_to,
+        created_by,
+        title,
+        description,
+        status,
+        priority,
+        due_date,
+        created_at,
+        updated_at
+      FROM tasks
+      WHERE id = $1
+        AND EXISTS (
+          SELECT 1
+          FROM projects AS project
+          WHERE project.id = tasks.project_id
+            AND (
+              project.owner_id = $2
+              OR EXISTS (
+                SELECT 1
+                FROM project_members AS member
+                WHERE member.project_id = project.id
+                  AND member.user_id = $2
+              )
+            )
+        )
     `,
-    [id]
+    [id, userId]
   );
 
   return result.rows[0];
@@ -92,29 +123,44 @@ interface UpdateTaskInput {
 
 export async function updateTask(
   id: string,
-  data: UpdateTaskInput
+  data: UpdateTaskInput,
+  userId: string
 ): Promise<Task | undefined> {
   const hasDescription = Object.hasOwn(data, "description");
   const hasAssignedTo = Object.hasOwn(data, "assigned_to");
 
   const result = await pool.query<Task>(
     `
-    UPDATE tasks
-    SET
-      title = COALESCE($2, title),
-      description = CASE
-        WHEN $3::boolean THEN $4::text
-        ELSE description
-      END,
-      assigned_to = CASE
-        WHEN $5::boolean THEN $6::uuid
-        ELSE assigned_to
-      END,
-      status = COALESCE($7, status),
-      priority = COALESCE($8, priority),
-      updated_at = NOW()
-    WHERE id = $1
-    RETURNING *
+      UPDATE tasks
+      SET
+        title = COALESCE($2, title),
+        description = CASE
+          WHEN $3::boolean THEN $4::text
+          ELSE description
+        END,
+        assigned_to = CASE
+          WHEN $5::boolean THEN $6::uuid
+          ELSE assigned_to
+        END,
+        status = COALESCE($7, status),
+        priority = COALESCE($8, priority),
+        updated_at = NOW()
+      WHERE id = $1
+        AND EXISTS (
+          SELECT 1
+          FROM projects AS project
+          WHERE project.id = tasks.project_id
+            AND (
+              project.owner_id = $9
+              OR EXISTS (
+                SELECT 1
+                FROM project_members AS member
+                WHERE member.project_id = project.id
+                  AND member.user_id = $9
+              )
+            )
+        )
+      RETURNING *
     `,
     [
       id,
@@ -125,18 +171,33 @@ export async function updateTask(
       data.assigned_to ?? null,
       data.status ?? null,
       data.priority ?? null,
+      userId,
     ]
   );
 
   return result.rows[0];
 }
-export async function deleteTask(id: string): Promise<boolean> {
+export async function deleteTask(id: string, userId: string): Promise<boolean> {
   const result = await pool.query(
     `
-    DELETE FROM tasks
-    WHERE id = $1
+      DELETE FROM tasks
+      WHERE id = $1
+        AND EXISTS (
+          SELECT 1
+          FROM projects AS project
+          WHERE project.id = tasks.project_id
+            AND (
+              project.owner_id = $2
+              OR EXISTS (
+                SELECT 1
+                FROM project_members AS member
+                WHERE member.project_id = project.id
+                  AND member.user_id = $2
+              )
+            )
+        )
     `,
-    [id]
+    [id, userId]
   );
 
   return result.rowCount !== null && result.rowCount > 0;

@@ -1,19 +1,20 @@
 import { z } from "zod";
 
-export const createTaskSchema = z.object({
-  project_id: z.uuid(),
-  created_by: z.uuid(),
-  assigned_to: z.uuid().nullable().optional(),
+export const createTaskSchema = z
+  .object({
+    project_id: z.uuid(),
+    assigned_to: z.uuid().nullable().optional(),
 
-  title: z
-    .string()
-    .min(1, "El título es obligatorio")
-    .max(200, "El título no puede tener más de 200 caracteres"),
+    title: z
+      .string()
+      .min(1, "El título es obligatorio")
+      .max(200, "El título no puede tener más de 200 caracteres"),
 
-  description: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
 
-  priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-});
+    priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+  })
+  .strict();
 export const updateTaskSchema = z
   .object({
     title: z
@@ -32,6 +33,7 @@ export const updateTaskSchema = z
 
     priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   })
+  .strict()
   .refine((data) => Object.keys(data).length > 0, {
     message: "Debes proporcionar al menos un campo para actualizar",
   });
