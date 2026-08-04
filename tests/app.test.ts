@@ -4,6 +4,14 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("rejects access to the current user without a session", async () => {
+    const response = await request(app).get("/auth/me");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      message: "Autenticación requerida",
+    });
+  });
   it("rejects login with an invalid email", async () => {
     const response = await request(app).post("/auth/login").send({
       email: "not-an-email",

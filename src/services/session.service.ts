@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { pool } from "../config/database.js";
 
+import type { User } from "../models/user.js";
+
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_TOKEN_BYTES = 32;
 
@@ -41,4 +43,28 @@ export async function createSession(userId: string): Promise<CreatedSession> {
     token,
     expiresAt,
   };
+}
+export async function findUserBySessionToken(
+  token: string
+): Promise<User | undefined> {
+  const tokenHash = hashSessionToken(token);
+
+  const result = await pool.query<User>(
+    `
+    SELECT
+      users.id,
+      users.name,
+      users.email,
+      users.created_at,
+      users.updated_at
+    FROM sessions
+    JOIN users ON users.id = sessions.user_id
+    WHERE sessions.token_hash = $1
+      AND sessions.expires_at > NOW()
+    LIMIT 1
+    `,
+    [tokenHash]
+  );
+
+  return result.rows[0];
 }

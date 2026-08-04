@@ -42,3 +42,12 @@ export async function login(req: LoginRequest, res: Response) {
     user,
   });
 }
+export function getCurrentUser(req: Request, res: Response) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  return res.json({
+    user: req.user,
+  });
+}
