@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth.routes.js";
 
 import cookieParser from "cookie-parser";
 
+import projectRoutes from "./routes/project.routes.js";
+
 const app = express();
 
 app.use(express.json());
@@ -22,6 +24,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/auth", authRoutes);
+app.use("/projects", projectRoutes);
+app.use("/tasks", taskRoutes);
 app.use("/tasks", taskRoutes);
 
 // Deben ir DESPUÉS de las rutas
