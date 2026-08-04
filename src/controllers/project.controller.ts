@@ -1,8 +1,10 @@
 import type { Request, Response } from "express";
 
 import { AppError } from "../errors/AppError.js";
-import { createProject } from "../services/project.service.js";
-
+import {
+  createProject,
+  getProjectsForUser,
+} from "../services/project.service.js";
 export async function createNewProject(req: Request, res: Response) {
   if (!req.user) {
     throw new AppError("Autenticación requerida", 401);
@@ -14,4 +16,13 @@ export async function createNewProject(req: Request, res: Response) {
   });
 
   return res.status(201).json(project);
+}
+export async function getProjects(req: Request, res: Response) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  const projects = await getProjectsForUser(req.user.id);
+
+  return res.json(projects);
 }

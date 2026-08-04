@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to list projects", async () => {
+    const response = await request(app).get("/projects");
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to create a project", async () => {
     const response = await request(app).post("/projects").send({
       name: "Private project",

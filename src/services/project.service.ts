@@ -1,5 +1,5 @@
 import { pool } from "../config/database.js";
-import type { Project } from "../models/project.js";
+import type { Project, ProjectWithRole } from "../models/project.js";
 
 interface CreateProjectInput {
   owner_id: string;
@@ -57,4 +57,33 @@ export async function createProject(
   } finally {
     client.release();
   }
+}
+export async function getProjectsForUser(
+  userId: string
+): Promise<ProjectWithRole[]> {
+  const result = await pool.query<ProjectWithRole>(
+    `
+      SELECT
+        project.id,
+        project.owner_id,
+        project.name,
+        project.description,
+        project.created_at,
+        project.updated_at,
+        CASE
+          WHEN project.owner_id = $1 THEN 'owner'
+          ELSE member.role
+        END AS role
+      FROM projects AS project
+      LEFT JOIN project_members AS member
+        ON member.project_id = project.id
+        AND member.user_id = $1
+      WHERE project.owner_id = $1
+        OR member.user_id = $1
+      ORDER BY project.updated_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
 }
