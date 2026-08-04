@@ -5,6 +5,8 @@ import { pool } from "../config/database.js";
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_TOKEN_BYTES = 32;
 
+export const SESSION_COOKIE_NAME = "nexo_session";
+
 export interface CreatedSession {
   token: string;
   expiresAt: Date;

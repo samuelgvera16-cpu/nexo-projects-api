@@ -1,7 +1,9 @@
 import { pool } from "../config/database.js";
 import type { User, UserWithPassword } from "../models/user.js";
-import type { RegisterInput } from "../schemas/auth.schema.js";
-import { hashPassword } from "../security/password.js";
+import type { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
+import { hashPassword, verifyPassword } from "../security/password.js";
+
+const dummyPasswordHashPromise = hashPassword("invalid user password");
 
 export async function createUser(data: RegisterInput): Promise<User> {
   const passwordHash = await hashPassword(data.password);
@@ -56,4 +58,20 @@ export function toPublicUser(user: UserWithPassword): User {
     created_at: user.created_at,
     updated_at: user.updated_at,
   };
+}
+
+export async function authenticateUser(
+  data: LoginInput
+): Promise<User | undefined> {
+  const user = await findUserByEmail(data.email);
+
+  const passwordHash = user?.password_hash ?? (await dummyPasswordHashPromise);
+
+  const passwordIsValid = await verifyPassword(data.password, passwordHash);
+
+  if (!user || !passwordIsValid) {
+    return undefined;
+  }
+
+  return toPublicUser(user);
 }

@@ -4,6 +4,15 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("rejects login with an invalid email", async () => {
+    const response = await request(app).post("/auth/login").send({
+      email: "not-an-email",
+      password: "any password",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Datos inválidos");
+  });
   it("rejects registration with a short password", async () => {
     const response = await request(app).post("/auth/register").send({
       name: "Samuel Vera",
