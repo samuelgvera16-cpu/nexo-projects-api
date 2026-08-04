@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to access task routes", async () => {
+    const response = await request(app).get("/tasks");
+
+    expect(response.status).toBe(401);
+  });
   it("clears the session cookie when logging out", async () => {
     const response = await request(app).post("/auth/logout");
 
@@ -68,28 +73,18 @@ describe("Application routes", () => {
     });
   });
 
-  it("rejects an invalid task UUID", async () => {
+  it("requires authentication before validating a task UUID", async () => {
     const response = await request(app).get("/tasks/not-a-valid-uuid");
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Parámetros inválidos");
-    expect(response.body.errors).toBeInstanceOf(Array);
+    expect(response.status).toBe(401);
   });
 
-  it("rejects an empty task update", async () => {
+  it("requires authentication before validating a task update", async () => {
     const response = await request(app)
       .put("/tasks/00000000-0000-4000-8000-000000000000")
       .send({});
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Datos inválidos");
-    expect(response.body.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          message: "Debes proporcionar al menos un campo para actualizar",
-        }),
-      ])
-    );
+    expect(response.status).toBe(401);
   });
 
   it("rejects malformed JSON", async () => {
