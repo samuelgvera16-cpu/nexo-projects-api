@@ -6,6 +6,7 @@ import type { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import {
   createSession,
   SESSION_COOKIE_NAME,
+  deleteSessionByToken,
 } from "../services/session.service.js";
 import { authenticateUser, createUser } from "../services/user.service.js";
 
@@ -50,4 +51,21 @@ export function getCurrentUser(req: Request, res: Response) {
   return res.json({
     user: req.user,
   });
+}
+export async function logout(req: Request, res: Response): Promise<void> {
+  const cookies = req.cookies as Record<string, unknown> | undefined;
+  const token = cookies?.nexo_session;
+
+  if (typeof token === "string") {
+    await deleteSessionByToken(token);
+  }
+
+  res.clearCookie("nexo_session", {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  res.status(204).send();
 }

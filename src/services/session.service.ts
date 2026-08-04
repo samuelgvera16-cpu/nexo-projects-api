@@ -68,3 +68,14 @@ export async function findUserBySessionToken(
 
   return result.rows[0];
 }
+export async function deleteSessionByToken(token: string): Promise<void> {
+  const tokenHash = hashSessionToken(token);
+
+  await pool.query(
+    `
+      DELETE FROM sessions
+      WHERE token_hash = $1
+    `,
+    [tokenHash]
+  );
+}

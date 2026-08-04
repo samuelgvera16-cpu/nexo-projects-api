@@ -4,6 +4,13 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("clears the session cookie when logging out", async () => {
+    const response = await request(app).post("/auth/logout");
+
+    expect(response.status).toBe(204);
+    expect(response.headers["set-cookie"]?.[0]).toContain("nexo_session=;");
+    expect(response.headers["set-cookie"]?.[0]).toContain("Expires=");
+  });
   it("rejects access to the current user without a session", async () => {
     const response = await request(app).get("/auth/me");
 
