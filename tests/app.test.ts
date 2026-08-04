@@ -9,6 +9,13 @@ describe("Application routes", () => {
 
     expect(response.status).toBe(401);
   });
+  it("requires authentication to get a project", async () => {
+    const response = await request(app).get(
+      "/projects/20000000-0000-4000-8000-000000000001"
+    );
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to create a project", async () => {
     const response = await request(app).post("/projects").send({
       name: "Private project",

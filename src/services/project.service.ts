@@ -87,3 +87,36 @@ export async function getProjectsForUser(
 
   return result.rows;
 }
+export async function getProjectByIdForUser(
+  projectId: string,
+  userId: string
+): Promise<ProjectWithRole | null> {
+  const result = await pool.query<ProjectWithRole>(
+    `
+      SELECT
+        project.id,
+        project.owner_id,
+        project.name,
+        project.description,
+        project.created_at,
+        project.updated_at,
+        CASE
+          WHEN project.owner_id = $2 THEN 'owner'
+          ELSE member.role
+        END AS role
+      FROM projects AS project
+      LEFT JOIN project_members AS member
+        ON member.project_id = project.id
+        AND member.user_id = $2
+      WHERE project.id = $1
+        AND (
+          project.owner_id = $2
+          OR member.user_id = $2
+        )
+      LIMIT 1
+    `,
+    [projectId, userId]
+  );
+
+  return result.rows[0] ?? null;
+}
