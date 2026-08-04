@@ -6,23 +6,32 @@ REST API for a collaborative project and task management platform.
 
 Nexo Projects is being developed as a portfolio project to demonstrate backend development with TypeScript, Express, PostgreSQL, runtime validation, automated testing, and continuous integration.
 
-> **Project status:** Backend foundation in active development. Task CRUD is implemented. Authentication, project endpoints, authorization, and the frontend are planned.
+> **Project status:** Backend API in active development. Task CRUD, PostgreSQL-backed authentication, project-level authorization, and role-based permissions are implemented. Project, membership, and comment endpoints plus the React frontend are planned.
 
 ## Current Features
 
+- User registration with normalized email addresses.
+- Password hashing with Node.js `scrypt`, unique salts, and timing-safe verification.
+- Login and logout with opaque session tokens.
+- SHA-256 session-token hashes stored in PostgreSQL.
+- `HttpOnly`, `SameSite=Lax` authentication cookies.
+- Authenticated current-user endpoint.
 - Task creation, retrieval, update, and deletion.
-- PostgreSQL persistence and relational constraints.
-- Request validation with Zod.
+- Project membership authorization for every task operation.
+- Owner, admin, and member role handling.
+- Owner/admin-only task deletion.
+- Server-controlled task creator identity.
+- Assignee membership validation.
+- Strict request validation with Zod.
 - UUID route-parameter validation.
-- Parameterized SQL queries.
-- Centralized application error handling.
-- PostgreSQL constraint error mapping.
+- Parameterized PostgreSQL queries.
+- Centralized application and database error handling.
 - Environment-variable validation.
 - Graceful server and database shutdown.
-- Reproducible database schema.
-- Safe demonstration data.
-- Automated API validation tests.
-- Automated CI checks with GitHub Actions.
+- Reproducible schema and database migrations.
+- Safe local demonstration data.
+- Automated tests with Vitest and Supertest.
+- Formatting, linting, type checking, testing, and builds in GitHub Actions.
 
 ## Tech Stack
 
@@ -71,40 +80,30 @@ Responsibilities:
 
 ```text
 nexo-projects-api/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── database/
-│   ├── schema.sql
-│   └── seed.sql
-├── src/
-│   ├── config/
-│   │   ├── database.ts
-│   │   └── env.ts
-│   ├── controllers/
-│   │   └── task.controller.ts
-│   ├── errors/
-│   │   └── AppError.ts
-│   ├── middleware/
-│   │   ├── errorHandler.ts
-│   │   └── validate.ts
-│   ├── models/
-│   │   └── task.ts
-│   ├── routes/
-│   │   └── task.routes.ts
-│   ├── schemas/
-│   │   └── task.schema.ts
-│   ├── services/
-│   │   └── task.service.ts
-│   ├── app.ts
-│   └── server.ts
-├── tests/
-│   └── app.test.ts
-├── .env.example
-├── LICENSE
-├── package.json
-├── tsconfig.json
-└── vitest.config.ts
+|-- .github/workflows/       # Continuous integration
+|-- database/
+|   |-- migrations/          # Incremental database changes
+|   |-- schema.sql           # Complete database schema
+|   `-- seed.sql             # Local demonstration data
+|-- src/
+|   |-- config/              # Environment and PostgreSQL configuration
+|   |-- controllers/         # HTTP request handlers
+|   |-- errors/              # Application error types
+|   |-- middleware/          # Authentication, validation, and errors
+|   |-- models/              # TypeScript domain models
+|   |-- routes/              # Authentication and task routes
+|   |-- schemas/             # Zod request schemas
+|   |-- security/            # Password hashing and verification
+|   |-- services/            # Database and business operations
+|   |-- types/               # Express type augmentation
+|   |-- app.ts               # Express application
+|   `-- server.ts            # HTTP server lifecycle
+|-- tests/                   # Automated test suite
+|-- .env.example
+|-- LICENSE
+|-- package.json
+|-- tsconfig.json
+`-- vitest.config.ts
 ```
 
 ## Requirements
@@ -181,6 +180,7 @@ You can also open `database/schema.sql` in pgAdmin Query Tool and execute it aga
 The schema creates:
 
 - `users`
+- `sessions`
 - `projects`
 - `project_members`
 - `tasks`
@@ -194,7 +194,7 @@ Using `psql`:
 psql -U postgres -d nexo_projects -f database/seed.sql
 ```
 
-The seed contains local demonstration records only. Authentication is not implemented yet, so its password hashes are deliberately unusable placeholders.
+The seed contains local demonstration records only. Seeded users have deliberately unusable password placeholders and cannot sign in. Create an authenticated local user through `POST /auth/register` when testing authentication.
 
 ### 7. Start development mode
 
@@ -246,51 +246,136 @@ npm run test:watch
 
 Runs tests in watch mode.
 
+```bash
+npm run format
+```
+
+Formats supported files with Prettier.
+
+```bash
+npm run format:check
+```
+
+Checks formatting without modifying files.
+
+```bash
+npm run lint
+```
+
+Runs ESLint across the project.
+
+```bash
+npm run lint:fix
+```
+
+Applies safe automatic ESLint fixes.
+
 ## API Endpoints
 
-| Method   | Endpoint     | Description                  |
-| -------- | ------------ | ---------------------------- |
-| `GET`    | `/`          | Returns API information      |
-| `GET`    | `/tasks`     | Returns all tasks            |
-| `GET`    | `/tasks/:id` | Returns one task             |
-| `POST`   | `/tasks`     | Creates a task               |
-| `PUT`    | `/tasks/:id` | Updates selected task fields |
-| `DELETE` | `/tasks/:id` | Deletes a task               |
+| Method   | Endpoint         | Access              | Description                               |
+| -------- | ---------------- | ------------------- | ----------------------------------------- |
+| `GET`    | `/`              | Public              | Returns API information                   |
+| `POST`   | `/auth/register` | Public              | Creates a user                            |
+| `POST`   | `/auth/login`    | Public              | Creates a database-backed session         |
+| `POST`   | `/auth/logout`   | Public/idempotent   | Deletes the current session and cookie    |
+| `GET`    | `/auth/me`       | Authenticated       | Returns the authenticated user            |
+| `GET`    | `/tasks`         | Project member      | Returns tasks from accessible projects    |
+| `GET`    | `/tasks/:id`     | Project member      | Returns one accessible task               |
+| `POST`   | `/tasks`         | Project member      | Creates a task in an accessible project   |
+| `PUT`    | `/tasks/:id`     | Project member      | Updates an accessible task                |
+| `DELETE` | `/tasks/:id`     | Project owner/admin | Deletes a task with role-based permission |
+
+Task endpoints use project membership authorization. Unauthorized project resources are returned as `404 Not Found` to avoid disclosing private resource identifiers.
 
 ## Request Examples
 
-The seed file creates known UUID values that can be used locally.
+The examples below use Windows PowerShell and preserve the authentication cookie in a web session.
 
-### Get all tasks
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/tasks"
-```
-
-### Get one demonstration task
+### Register a local user
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/tasks/30000000-0000-4000-8000-000000000001"
+$registerBody = @{
+  name = "Local Developer"
+  email = "developer@example.com"
+  password = "Local demo password 2026!"
+} | ConvertTo-Json
+
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Post `
+  -Uri "http://localhost:3000/auth/register" `
+  -ContentType "application/json" `
+  -Body $registerBody
 ```
+
+### Sign in and preserve the session cookie
+
+```powershell
+$loginBody = @{
+  email = "developer@example.com"
+  password = "Local demo password 2026!"
+} | ConvertTo-Json
+
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Post `
+  -Uri "http://localhost:3000/auth/login" `
+  -ContentType "application/json" `
+  -Body $loginBody `
+  -SessionVariable nexoSession
+```
+
+The API stores only a SHA-256 hash of the opaque session token in PostgreSQL. The original token is sent through an `HttpOnly` cookie.
+
+### Add the local user to the demonstration project
+
+Project membership endpoints are planned. Until they are implemented, local membership can be added with PostgreSQL:
+
+```sql
+INSERT INTO project_members (project_id, user_id, role)
+SELECT
+  '20000000-0000-4000-8000-000000000001',
+  users.id,
+  'member'
+FROM users
+WHERE users.email = 'developer@example.com'
+ON CONFLICT (project_id, user_id) DO NOTHING;
+```
+
+### Get accessible tasks
+
+```powershell
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Get `
+  -Uri "http://localhost:3000/tasks" `
+  -WebSession $nexoSession
+```
+
+Only tasks from projects owned by or shared with the authenticated user are returned.
 
 ### Create a task
 
 ```powershell
 $taskBody = @{
   project_id = "20000000-0000-4000-8000-000000000001"
-  created_by = "10000000-0000-4000-8000-000000000001"
-  assigned_to = "10000000-0000-4000-8000-000000000002"
   title = "Review the API documentation"
-  description = "Confirm that setup instructions work from a clean environment."
+  description = "Confirm the setup from a clean environment."
   priority = "high"
 } | ConvertTo-Json
 
-Invoke-RestMethod `
+$taskResponse = Invoke-WebRequest `
+  -UseBasicParsing `
   -Method Post `
   -Uri "http://localhost:3000/tasks" `
   -ContentType "application/json" `
-  -Body $taskBody
+  -Body $taskBody `
+  -WebSession $nexoSession
+
+$task = $taskResponse.Content | ConvertFrom-Json
 ```
+
+The server assigns `created_by` from the authenticated session. Clients cannot choose or replace the creator.
 
 ### Update a task
 
@@ -300,30 +385,28 @@ $updateBody = @{
   priority = "urgent"
 } | ConvertTo-Json
 
-Invoke-RestMethod `
+Invoke-WebRequest `
+  -UseBasicParsing `
   -Method Put `
-  -Uri "http://localhost:3000/tasks/30000000-0000-4000-8000-000000000001" `
+  -Uri "http://localhost:3000/tasks/$($task.id)" `
   -ContentType "application/json" `
-  -Body $updateBody
+  -Body $updateBody `
+  -WebSession $nexoSession
 ```
 
-Nullable fields can be cleared explicitly:
+Nullable fields such as `description` and `assigned_to` can be cleared explicitly with `$null`. Non-null assignees must belong to the task's project.
+
+### Sign out
 
 ```powershell
-$clearDescription = @{
-  description = $null
-} | ConvertTo-Json
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Post `
+  -Uri "http://localhost:3000/auth/logout" `
+  -WebSession $nexoSession
 ```
 
-### Delete a task
-
-```powershell
-Invoke-RestMethod `
-  -Method Delete `
-  -Uri "http://localhost:3000/tasks/TASK_UUID"
-```
-
-A successful deletion returns `204 No Content`.
+A successful logout deletes the database session, clears the cookie, and returns `204 No Content`.
 
 ## Validation and Error Responses
 
@@ -356,21 +439,33 @@ Unexpected internal errors return a generic response without exposing PostgreSQL
 
 ## Testing
 
-The current test suite verifies:
+The automated test suite currently includes 28 tests covering:
 
-- Root endpoint response.
-- Unknown-route handling.
-- Invalid UUID rejection.
-- Empty-update rejection.
+- Root endpoint and unknown-route behavior.
 - Malformed JSON handling.
+- Authentication request schemas.
+- Email normalization and privilege-injection rejection.
+- Password hashing and timing-safe verification.
+- Session-token generation and hashing.
+- Login-protected routes.
+- Logout cookie clearing.
+- Task UUID and update validation.
+- Strict task creation and update schemas.
+- Rejection of client-controlled creator and project fields.
 
-Run it with:
+Run the suite once:
 
 ```bash
 npm test
 ```
 
-Database integration tests will be added in a later phase.
+Run it in watch mode:
+
+```bash
+npm run test:watch
+```
+
+Database integration tests are planned as a separate testing layer.
 
 ## Continuous Integration
 
@@ -378,6 +473,8 @@ GitHub Actions runs the following checks on every push and pull request:
 
 ```text
 npm ci
+npm run format:check
+npm run lint
 npm run typecheck
 npm test
 npm run build
@@ -389,24 +486,37 @@ The CI badge at the top of this README shows the current workflow status.
 
 Implemented:
 
+- Password hashing with Node.js `scrypt`.
+- Unique random password salts.
+- Timing-safe password verification.
+- Generic invalid-credential responses.
+- Cryptographically random opaque session tokens.
+- SHA-256 session-token hashes in PostgreSQL.
+- Expiring database-backed sessions.
+- `HttpOnly`, `SameSite=Lax` cookies.
+- `Secure` cookies in production mode.
+- Server-side logout and session deletion.
+- Strict runtime request validation.
+- Server-controlled creator identity.
+- Project membership authorization.
+- Owner, admin, and member permissions.
+- Assignee membership validation.
 - Parameterized SQL queries.
-- Runtime request validation.
-- Environment-variable validation.
 - Generic internal error responses.
+- Environment-variable validation.
 - Ignored local `.env` files.
 
-Required before production deployment:
+Required before public production deployment:
 
-- Password hashing.
-- Authentication with secure cookies.
-- Project membership authorization.
-- Role-based permissions.
-- Rate limiting.
-- CORS restrictions.
+- Authentication rate limiting.
 - Security headers.
+- Explicit production CORS policy.
+- CSRF protection appropriate for the frontend deployment.
 - Request-size limits.
 - Production secret management.
-- HTTPS.
+- HTTPS termination.
+- Session cleanup scheduling.
+- Security-focused integration testing.
 
 ## Roadmap
 
@@ -415,29 +525,35 @@ Required before production deployment:
 - [x] Express and TypeScript setup
 - [x] PostgreSQL connection
 - [x] Relational database schema
+- [x] Database migration structure
 - [x] Demonstration seed data
 - [x] Task CRUD
 - [x] Zod validation
 - [x] Centralized error handling
-- [x] Automated validation tests
+- [x] ESLint and Prettier
+- [x] Automated tests
 - [x] GitHub Actions CI
+
+### Authentication and authorization
+
+- [x] User registration
+- [x] Sign in and sign out
+- [x] Password hashing with `scrypt`
+- [x] Database-backed sessions
+- [x] Secure authentication cookies
+- [x] Authenticated current-user endpoint
+- [x] Project membership authorization
+- [x] Owner, admin, and member permissions
+- [x] Server-controlled task creator identity
+- [x] Assignee membership validation
 
 ### Core domain
 
-- [ ] User endpoints
-- [ ] Project endpoints
+- [ ] Project CRUD endpoints
 - [ ] Project membership endpoints
 - [ ] Comment endpoints
 - [ ] Task pagination, filtering, sorting, and search
 - [ ] Database integration tests
-
-### Authentication and authorization
-
-- [ ] User registration
-- [ ] Sign in and sign out
-- [ ] Password hashing
-- [ ] Secure authentication cookies
-- [ ] Owner, admin, and member permissions
 
 ### Full-stack application
 
@@ -454,7 +570,7 @@ Required before production deployment:
 - [ ] OpenAPI documentation
 - [ ] Docker development environment
 - [ ] Rate limiting and security headers
-- [ ] Application logging
+- [ ] Structured application logging
 - [ ] Cloud deployment
 
 ## License
