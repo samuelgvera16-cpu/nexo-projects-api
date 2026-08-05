@@ -37,6 +37,8 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Reproducible schema and database migrations.
 - Safe local demonstration data.
 - Automated tests with Vitest and Supertest.
+- Interactive OpenAPI 3.1 documentation with Swagger UI.
+- Downloadable OpenAPI JSON specification.
 - Formatting, linting, type checking, testing, and builds in GitHub Actions.
 
 ## Tech Stack
@@ -49,6 +51,7 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Zod
 - Vitest
 - Supertest
+- OpenAPI 3.1 and Swagger UI
 - GitHub Actions
 
 ## Architecture
@@ -214,6 +217,22 @@ The API will be available at:
 http://localhost:3000
 ```
 
+## Interactive API Documentation
+
+With the development server running, open the Swagger UI:
+
+```text
+http://localhost:3000/docs/
+```
+
+The downloadable OpenAPI 3.1 document is available at:
+
+```text
+http://localhost:3000/openapi.json
+```
+
+Swagger UI documents the system, authentication, project, membership, and task endpoints. It also provides request schemas, response schemas, status codes, role requirements, and interactive API execution.
+
 ## Available Scripts
 
 ```bash
@@ -281,6 +300,8 @@ Applies safe automatic ESLint fixes.
 | Method   | Endpoint                        | Access              | Description                                     |
 | -------- | ------------------------------- | ------------------- | ----------------------------------------------- |
 | `GET`    | `/`                             | Public              | Returns API information                         |
+| `GET`    | `/docs/`                        | Public              | Serves the interactive Swagger UI               |
+| `GET`    | `/openapi.json`                 | Public              | Returns the OpenAPI 3.1 document                |
 | `POST`   | `/auth/register`                | Public              | Creates a user                                  |
 | `POST`   | `/auth/login`                   | Public              | Creates a database-backed session               |
 | `POST`   | `/auth/logout`                  | Public/idempotent   | Deletes the current session and cookie          |
@@ -619,7 +640,7 @@ Required before public production deployment:
 
 ### Production readiness
 
-- [ ] OpenAPI documentation
+- [x] OpenAPI documentation
 - [ ] Docker development environment
 - [ ] Rate limiting and security headers
 - [ ] Structured application logging
