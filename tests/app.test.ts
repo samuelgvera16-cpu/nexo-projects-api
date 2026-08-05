@@ -4,6 +4,15 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to add a project member", async () => {
+    const response = await request(app)
+      .post("/projects/20000000-0000-4000-8000-000000000001/members")
+      .send({
+        email: "member@example.com",
+      });
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to list project members", async () => {
     const response = await request(app).get(
       "/projects/20000000-0000-4000-8000-000000000001/members"

@@ -1,6 +1,11 @@
 import { Router } from "express";
 
-import { listProjectMembers } from "../controllers/project-member.controller.js";
+import {
+  addMemberToProject,
+  listProjectMembers,
+} from "../controllers/project-member.controller.js";
+
+import { addProjectMemberSchema } from "../schemas/project-member.schema.js";
 
 import {
   createNewProject,
@@ -28,6 +33,13 @@ router.get(
   "/:id/members",
   validateParams(projectIdParamSchema),
   listProjectMembers
+);
+
+router.post(
+  "/:id/members",
+  validateParams(projectIdParamSchema),
+  validateBody(addProjectMemberSchema),
+  addMemberToProject
 );
 
 router.get("/:id", validateParams(projectIdParamSchema), getProject);
