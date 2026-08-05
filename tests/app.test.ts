@@ -4,6 +4,13 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to list project members", async () => {
+    const response = await request(app).get(
+      "/projects/20000000-0000-4000-8000-000000000001/members"
+    );
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to delete a project", async () => {
     const response = await request(app).delete(
       "/projects/20000000-0000-4000-8000-000000000001"

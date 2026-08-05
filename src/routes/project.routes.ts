@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { listProjectMembers } from "../controllers/project-member.controller.js";
+
 import {
   createNewProject,
   deleteExistingProject,
@@ -21,6 +23,12 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/", getProjects);
+
+router.get(
+  "/:id/members",
+  validateParams(projectIdParamSchema),
+  listProjectMembers
+);
 
 router.get("/:id", validateParams(projectIdParamSchema), getProject);
 
