@@ -1,19 +1,16 @@
-import express from "express";
-
-import taskRoutes from "./routes/task.routes.js";
-
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-
-import authRoutes from "./routes/auth.routes.js";
-
 import cookieParser from "cookie-parser";
+import express from "express";
+import swaggerUi from "swagger-ui-express";
 
+import { openApiDocument } from "./docs/openapi.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";
 import projectRoutes from "./routes/project.routes.js";
+import taskRoutes from "./routes/task.routes.js";
 
 const app = express();
 
 app.use(express.json());
-
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
@@ -23,10 +20,20 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/auth", authRoutes);
+app.get("/openapi.json", (req, res) => {
+  res.json(openApiDocument);
+});
+
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(openApiDocument, {
+    customSiteTitle: "Nexo Projects API Docs",
+  })
+);
+
 app.use("/auth", authRoutes);
 app.use("/projects", projectRoutes);
-app.use("/tasks", taskRoutes);
 app.use("/tasks", taskRoutes);
 
 // Deben ir DESPUÉS de las rutas
