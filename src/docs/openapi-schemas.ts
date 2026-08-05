@@ -1,4 +1,19 @@
 export const openApiSchemas = {
+  ApiInfo: {
+    type: "object",
+    required: ["mensaje", "version"],
+    properties: {
+      mensaje: {
+        type: "string",
+        example: "Hola desde Express + TypeScript 🚀",
+      },
+      version: {
+        type: "string",
+        example: "1.0.0",
+      },
+    },
+  },
+
   RegisterRequest: {
     type: "object",
     additionalProperties: false,
@@ -85,6 +100,44 @@ export const openApiSchemas = {
     },
   },
 
+  CreateProjectRequest: {
+    type: "object",
+    additionalProperties: false,
+    required: ["name"],
+    properties: {
+      name: {
+        type: "string",
+        minLength: 1,
+        maxLength: 150,
+        example: "Portfolio platform",
+      },
+      description: {
+        type: ["string", "null"],
+        maxLength: 2000,
+        example: "A collaborative platform for managing portfolio content.",
+      },
+    },
+  },
+
+  UpdateProjectRequest: {
+    type: "object",
+    additionalProperties: false,
+    minProperties: 1,
+    properties: {
+      name: {
+        type: "string",
+        minLength: 1,
+        maxLength: 150,
+        example: "Updated portfolio platform",
+      },
+      description: {
+        type: ["string", "null"],
+        maxLength: 2000,
+        example: "Updated project description.",
+      },
+    },
+  },
+
   Project: {
     type: "object",
     required: [
@@ -141,6 +194,37 @@ export const openApiSchemas = {
     ],
   },
 
+  AddProjectMemberRequest: {
+    type: "object",
+    additionalProperties: false,
+    required: ["email"],
+    properties: {
+      email: {
+        type: "string",
+        format: "email",
+        maxLength: 254,
+        example: "member@example.com",
+      },
+      role: {
+        type: "string",
+        enum: ["admin", "member"],
+        default: "member",
+      },
+    },
+  },
+
+  UpdateProjectMemberRoleRequest: {
+    type: "object",
+    additionalProperties: false,
+    required: ["role"],
+    properties: {
+      role: {
+        type: "string",
+        enum: ["admin", "member"],
+      },
+    },
+  },
+
   ProjectMember: {
     type: "object",
     required: ["project_id", "user_id", "name", "email", "role", "joined_at"],
@@ -169,6 +253,67 @@ export const openApiSchemas = {
       joined_at: {
         type: "string",
         format: "date-time",
+      },
+    },
+  },
+
+  CreateTaskRequest: {
+    type: "object",
+    additionalProperties: false,
+    required: ["project_id", "title"],
+    properties: {
+      project_id: {
+        type: "string",
+        format: "uuid",
+      },
+      assigned_to: {
+        type: ["string", "null"],
+        format: "uuid",
+      },
+      title: {
+        type: "string",
+        minLength: 1,
+        maxLength: 200,
+        example: "Document the API",
+      },
+      description: {
+        type: ["string", "null"],
+        example: "Add OpenAPI documentation for every endpoint.",
+      },
+      priority: {
+        type: "string",
+        enum: ["low", "medium", "high", "urgent"],
+        example: "high",
+      },
+    },
+  },
+
+  UpdateTaskRequest: {
+    type: "object",
+    additionalProperties: false,
+    minProperties: 1,
+    properties: {
+      title: {
+        type: "string",
+        minLength: 1,
+        maxLength: 200,
+        example: "Complete the API documentation",
+      },
+      description: {
+        type: ["string", "null"],
+        example: "Verify every documented response.",
+      },
+      assigned_to: {
+        type: ["string", "null"],
+        format: "uuid",
+      },
+      status: {
+        type: "string",
+        enum: ["todo", "in_progress", "completed", "cancelled"],
+      },
+      priority: {
+        type: "string",
+        enum: ["low", "medium", "high", "urgent"],
       },
     },
   },
