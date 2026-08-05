@@ -6,7 +6,7 @@ REST API for a collaborative project and task management platform.
 
 Nexo Projects is being developed as a portfolio project to demonstrate backend development with TypeScript, Express, PostgreSQL, runtime validation, automated testing, and continuous integration.
 
-> **Project status:** Backend API in active development. Task CRUD, PostgreSQL-backed authentication, project-level authorization, and role-based permissions are implemented. Project, membership, and comment endpoints plus the React frontend are planned.
+> **Project status:** Backend API in active development. Authentication, project and task CRUD, project membership management, project-level authorization, and role-based permissions are implemented. Comment endpoints and the React frontend are planned.
 
 ## Current Features
 
@@ -16,6 +16,12 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - SHA-256 session-token hashes stored in PostgreSQL.
 - `HttpOnly`, `SameSite=Lax` authentication cookies.
 - Authenticated current-user endpoint.
+- Authenticated project creation, listing, retrieval, update, and deletion.
+- Transactional owner membership during project creation.
+- Project member listing without exposing password hashes.
+- Member addition by normalized email address.
+- Owner-controlled member role updates.
+- Secure member removal with owner and admin permissions.
 - Task creation, retrieval, update, and deletion.
 - Project membership authorization for every task operation.
 - Owner, admin, and member role handling.
@@ -91,7 +97,7 @@ nexo-projects-api/
 |   |-- errors/              # Application error types
 |   |-- middleware/          # Authentication, validation, and errors
 |   |-- models/              # TypeScript domain models
-|   |-- routes/              # Authentication and task routes
+|   |-- routes/              # Authentication, projects, member, and task routes
 |   |-- schemas/             # Zod request schemas
 |   |-- security/            # Password hashing and verification
 |   |-- services/            # Database and business operations
@@ -272,18 +278,27 @@ Applies safe automatic ESLint fixes.
 
 ## API Endpoints
 
-| Method   | Endpoint         | Access              | Description                               |
-| -------- | ---------------- | ------------------- | ----------------------------------------- |
-| `GET`    | `/`              | Public              | Returns API information                   |
-| `POST`   | `/auth/register` | Public              | Creates a user                            |
-| `POST`   | `/auth/login`    | Public              | Creates a database-backed session         |
-| `POST`   | `/auth/logout`   | Public/idempotent   | Deletes the current session and cookie    |
-| `GET`    | `/auth/me`       | Authenticated       | Returns the authenticated user            |
-| `GET`    | `/tasks`         | Project member      | Returns tasks from accessible projects    |
-| `GET`    | `/tasks/:id`     | Project member      | Returns one accessible task               |
-| `POST`   | `/tasks`         | Project member      | Creates a task in an accessible project   |
-| `PUT`    | `/tasks/:id`     | Project member      | Updates an accessible task                |
-| `DELETE` | `/tasks/:id`     | Project owner/admin | Deletes a task with role-based permission |
+| Method   | Endpoint                        | Access              | Description                                     |
+| -------- | ------------------------------- | ------------------- | ----------------------------------------------- |
+| `GET`    | `/`                             | Public              | Returns API information                         |
+| `POST`   | `/auth/register`                | Public              | Creates a user                                  |
+| `POST`   | `/auth/login`                   | Public              | Creates a database-backed session               |
+| `POST`   | `/auth/logout`                  | Public/idempotent   | Deletes the current session and cookie          |
+| `GET`    | `/auth/me`                      | Authenticated       | Returns the authenticated user                  |
+| `GET`    | `/projects`                     | Authenticated       | Lists projects accessible to the current user   |
+| `GET`    | `/projects/:id`                 | Project member      | Returns one accessible project and its role     |
+| `POST`   | `/projects`                     | Authenticated       | Creates a project and its owner membership      |
+| `PUT`    | `/projects/:id`                 | Project owner/admin | Updates an accessible project                   |
+| `DELETE` | `/projects/:id`                 | Project owner       | Deletes a project and associated records        |
+| `GET`    | `/projects/:id/members`         | Project member      | Lists project members and their roles           |
+| `POST`   | `/projects/:id/members`         | Project owner/admin | Adds a registered user by email                 |
+| `PATCH`  | `/projects/:id/members/:userId` | Project owner       | Changes a member between admin and member roles |
+| `DELETE` | `/projects/:id/members/:userId` | Project owner/admin | Removes a member according to role permissions  |
+| `GET`    | `/tasks`                        | Project member      | Returns tasks from accessible projects          |
+| `GET`    | `/tasks/:id`                    | Project member      | Returns one accessible task                     |
+| `POST`   | `/tasks`                        | Project member      | Creates a task in an accessible project         |
+| `PUT`    | `/tasks/:id`                    | Project member      | Updates an accessible task                      |
+| `DELETE` | `/tasks/:id`                    | Project owner/admin | Deletes a task with role-based permission       |
 
 Task endpoints use project membership authorization. Unauthorized project resources are returned as `404 Not Found` to avoid disclosing private resource identifiers.
 
@@ -327,19 +342,56 @@ Invoke-WebRequest `
 
 The API stores only a SHA-256 hash of the opaque session token in PostgreSQL. The original token is sent through an `HttpOnly` cookie.
 
-### Add the local user to the demonstration project
+### Create a project
 
-Project membership endpoints are planned. Until they are implemented, local membership can be added with PostgreSQL:
+```powershell
+$projectBody = @{
+  name = "Portfolio Project"
+  description = "Project created through the authenticated API."
+} | ConvertTo-Json
 
-```sql
-INSERT INTO project_members (project_id, user_id, role)
-SELECT
-  '20000000-0000-4000-8000-000000000001',
-  users.id,
-  'member'
-FROM users
-WHERE users.email = 'developer@example.com'
-ON CONFLICT (project_id, user_id) DO NOTHING;
+$projectResponse = Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Post `
+  -Uri "http://localhost:3000/projects" `
+  -ContentType "application/json" `
+  -Body $projectBody `
+  -WebSession $nexoSession
+
+$project = $projectResponse.Content | ConvertFrom-Json
+```
+
+Project creation and owner membership are committed in a single database transaction. The authenticated user becomes the owner automatically.
+
+### Add a registered project member
+
+The collaborator must already have an account created through `/auth/register`.
+
+```powershell
+$memberBody = @{
+  email = "collaborator@example.com"
+  role = "member"
+} | ConvertTo-Json
+
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Post `
+  -Uri "http://localhost:3000/projects/$($project.id)/members" `
+  -ContentType "application/json" `
+  -Body $memberBody `
+  -WebSession $nexoSession
+```
+
+The API resolves the user by normalized email. Clients cannot submit a `user_id` or assign the `owner` role.
+
+### List project members
+
+```powershell
+Invoke-WebRequest `
+  -UseBasicParsing `
+  -Method Get `
+  -Uri "http://localhost:3000/projects/$($project.id)/members" `
+  -WebSession $nexoSession
 ```
 
 ### Get accessible tasks
@@ -358,7 +410,7 @@ Only tasks from projects owned by or shared with the authenticated user are retu
 
 ```powershell
 $taskBody = @{
-  project_id = "20000000-0000-4000-8000-000000000001"
+  project_id = $project.id
   title = "Review the API documentation"
   description = "Confirm the setup from a clean environment."
   priority = "high"
@@ -549,8 +601,8 @@ Required before public production deployment:
 
 ### Core domain
 
-- [ ] Project CRUD endpoints
-- [ ] Project membership endpoints
+- [x] Project CRUD endpoints
+- [x] Project membership endpoints
 - [ ] Comment endpoints
 - [ ] Task pagination, filtering, sorting, and search
 - [ ] Database integration tests

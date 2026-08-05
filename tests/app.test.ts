@@ -4,6 +4,75 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to remove a project member", async () => {
+    const response = await request(app).delete(
+      "/projects/20000000-0000-4000-8000-000000000001/members/30000000-0000-4000-8000-000000000001"
+    );
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to change a project member role", async () => {
+    const response = await request(app)
+      .patch(
+        "/projects/20000000-0000-4000-8000-000000000001/members/30000000-0000-4000-8000-000000000001"
+      )
+      .send({
+        role: "admin",
+      });
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to add a project member", async () => {
+    const response = await request(app)
+      .post("/projects/20000000-0000-4000-8000-000000000001/members")
+      .send({
+        email: "member@example.com",
+      });
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to list project members", async () => {
+    const response = await request(app).get(
+      "/projects/20000000-0000-4000-8000-000000000001/members"
+    );
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to delete a project", async () => {
+    const response = await request(app).delete(
+      "/projects/20000000-0000-4000-8000-000000000001"
+    );
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to update a project", async () => {
+    const response = await request(app)
+      .put("/projects/20000000-0000-4000-8000-000000000001")
+      .send({
+        name: "Unauthorized update",
+      });
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to list projects", async () => {
+    const response = await request(app).get("/projects");
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to get a project", async () => {
+    const response = await request(app).get(
+      "/projects/20000000-0000-4000-8000-000000000001"
+    );
+
+    expect(response.status).toBe(401);
+  });
+  it("requires authentication to create a project", async () => {
+    const response = await request(app).post("/projects").send({
+      name: "Private project",
+    });
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to access task routes", async () => {
     const response = await request(app).get("/tasks");
 

@@ -1,0 +1,77 @@
+import { Router } from "express";
+
+import {
+  addMemberToProject,
+  changeProjectMemberRole,
+  listProjectMembers,
+  removeMemberFromProject,
+} from "../controllers/project-member.controller.js";
+import {
+  createNewProject,
+  deleteExistingProject,
+  getProject,
+  getProjects,
+  updateExistingProject,
+} from "../controllers/project.controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { validateBody, validateParams } from "../middleware/validate.js";
+import {
+  addProjectMemberSchema,
+  projectMemberParamsSchema,
+  updateProjectMemberRoleSchema,
+} from "../schemas/project-member.schema.js";
+import {
+  createProjectSchema,
+  projectIdParamSchema,
+  updateProjectSchema,
+} from "../schemas/project.schema.js";
+const router = Router();
+
+router.use(requireAuth);
+
+router.get("/", getProjects);
+
+router.get(
+  "/:id/members",
+  validateParams(projectIdParamSchema),
+  listProjectMembers
+);
+
+router.post(
+  "/:id/members",
+  validateParams(projectIdParamSchema),
+  validateBody(addProjectMemberSchema),
+  addMemberToProject
+);
+
+router.patch(
+  "/:id/members/:userId",
+  validateParams(projectMemberParamsSchema),
+  validateBody(updateProjectMemberRoleSchema),
+  changeProjectMemberRole
+);
+
+router.delete(
+  "/:id/members/:userId",
+  validateParams(projectMemberParamsSchema),
+  removeMemberFromProject
+);
+
+router.get("/:id", validateParams(projectIdParamSchema), getProject);
+
+router.put(
+  "/:id",
+  validateParams(projectIdParamSchema),
+  validateBody(updateProjectSchema),
+  updateExistingProject
+);
+
+router.delete(
+  "/:id",
+  validateParams(projectIdParamSchema),
+  deleteExistingProject
+);
+
+router.post("/", validateBody(createProjectSchema), createNewProject);
+
+export default router;
