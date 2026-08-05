@@ -4,11 +4,16 @@ import { AppError } from "../errors/AppError.js";
 import {
   addProjectMember,
   getProjectMembers,
+  updateProjectMemberRole,
 } from "../services/project-member.service.js";
 import { getProjectByIdForUser } from "../services/project.service.js";
 
 type ProjectParams = {
   id: string;
+};
+
+type ProjectMemberParams = ProjectParams & {
+  userId: string;
 };
 
 export async function listProjectMembers(
@@ -70,4 +75,39 @@ export async function addMemberToProject(
   }
 
   return res.status(201).json(result.member);
+}
+
+export async function changeProjectMemberRole(
+  req: Request<ProjectMemberParams>,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  const project = await getProjectByIdForUser(req.params.id, req.user.id);
+
+  if (!project) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  if (project.role !== "owner") {
+    throw new AppError("Solo el propietario puede cambiar roles", 403);
+  }
+
+  if (req.params.userId === project.owner_id) {
+    throw new AppError("No puedes cambiar el rol del propietario", 400);
+  }
+
+  const updatedMember = await updateProjectMemberRole(
+    req.params.id,
+    req.params.userId,
+    req.body.role
+  );
+
+  if (!updatedMember) {
+    throw new AppError("Integrante no encontrado", 404);
+  }
+
+  return res.json(updatedMember);
 }

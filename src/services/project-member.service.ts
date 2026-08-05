@@ -122,3 +122,34 @@ export async function addProjectMember(
     },
   };
 }
+
+export async function updateProjectMemberRole(
+  projectId: string,
+  userId: string,
+  role: AssignableProjectRole
+): Promise<ProjectMember | null> {
+  const result = await pool.query<ProjectMember>(
+    `
+      UPDATE project_members AS member
+      SET role = $3
+      FROM
+        projects AS project,
+        users AS project_user
+      WHERE member.project_id = $1
+        AND member.user_id = $2
+        AND project.id = member.project_id
+        AND project.owner_id <> member.user_id
+        AND project_user.id = member.user_id
+      RETURNING
+        member.project_id,
+        member.user_id,
+        project_user.name,
+        project_user.email,
+        member.role,
+        member.joined_at
+    `,
+    [projectId, userId, role]
+  );
+
+  return result.rows[0] ?? null;
+}

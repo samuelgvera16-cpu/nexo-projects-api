@@ -2,11 +2,9 @@ import { Router } from "express";
 
 import {
   addMemberToProject,
+  changeProjectMemberRole,
   listProjectMembers,
 } from "../controllers/project-member.controller.js";
-
-import { addProjectMemberSchema } from "../schemas/project-member.schema.js";
-
 import {
   createNewProject,
   deleteExistingProject,
@@ -14,15 +12,18 @@ import {
   getProjects,
   updateExistingProject,
 } from "../controllers/project.controller.js";
-
 import { requireAuth } from "../middleware/requireAuth.js";
 import { validateBody, validateParams } from "../middleware/validate.js";
+import {
+  addProjectMemberSchema,
+  projectMemberParamsSchema,
+  updateProjectMemberRoleSchema,
+} from "../schemas/project-member.schema.js";
 import {
   createProjectSchema,
   projectIdParamSchema,
   updateProjectSchema,
 } from "../schemas/project.schema.js";
-
 const router = Router();
 
 router.use(requireAuth);
@@ -40,6 +41,13 @@ router.post(
   validateParams(projectIdParamSchema),
   validateBody(addProjectMemberSchema),
   addMemberToProject
+);
+
+router.patch(
+  "/:id/members/:userId",
+  validateParams(projectMemberParamsSchema),
+  validateBody(updateProjectMemberRoleSchema),
+  changeProjectMemberRole
 );
 
 router.get("/:id", validateParams(projectIdParamSchema), getProject);

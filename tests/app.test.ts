@@ -4,6 +4,17 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("requires authentication to change a project member role", async () => {
+    const response = await request(app)
+      .patch(
+        "/projects/20000000-0000-4000-8000-000000000001/members/30000000-0000-4000-8000-000000000001"
+      )
+      .send({
+        role: "admin",
+      });
+
+    expect(response.status).toBe(401);
+  });
   it("requires authentication to add a project member", async () => {
     const response = await request(app)
       .post("/projects/20000000-0000-4000-8000-000000000001/members")
