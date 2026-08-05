@@ -1,9 +1,12 @@
 import type { Request, Response } from "express";
 
 import { AppError } from "../errors/AppError.js";
+
 import {
   addProjectMember,
+  getProjectMemberById,
   getProjectMembers,
+  removeProjectMember,
   updateProjectMemberRole,
 } from "../services/project-member.service.js";
 import { getProjectByIdForUser } from "../services/project.service.js";
@@ -110,4 +113,55 @@ export async function changeProjectMemberRole(
   }
 
   return res.json(updatedMember);
+}
+
+export async function removeMemberFromProject(
+  req: Request<ProjectMemberParams>,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  const project = await getProjectByIdForUser(req.params.id, req.user.id);
+
+  if (!project) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  const targetMember = await getProjectMemberById(
+    req.params.id,
+    req.params.userId
+  );
+
+  if (!targetMember) {
+    throw new AppError("Integrante no encontrado", 404);
+  }
+
+  if (targetMember.role === "owner") {
+    throw new AppError("No puedes eliminar al propietario", 400);
+  }
+
+  const canRemove =
+    project.role === "owner" ||
+    (project.role === "admin" && targetMember.role === "member");
+
+  if (!canRemove) {
+    throw new AppError(
+      "No tienes permiso para eliminar a este integrante",
+      403
+    );
+  }
+
+  const removed = await removeProjectMember(
+    req.params.id,
+    req.params.userId,
+    req.user.id
+  );
+
+  if (!removed) {
+    throw new AppError("Integrante no encontrado", 404);
+  }
+
+  return res.status(204).send();
 }

@@ -4,6 +4,7 @@ import {
   addMemberToProject,
   changeProjectMemberRole,
   listProjectMembers,
+  removeMemberFromProject,
 } from "../controllers/project-member.controller.js";
 import {
   createNewProject,
@@ -48,6 +49,12 @@ router.patch(
   validateParams(projectMemberParamsSchema),
   validateBody(updateProjectMemberRoleSchema),
   changeProjectMemberRole
+);
+
+router.delete(
+  "/:id/members/:userId",
+  validateParams(projectMemberParamsSchema),
+  removeMemberFromProject
 );
 
 router.get("/:id", validateParams(projectIdParamSchema), getProject);

@@ -153,3 +153,67 @@ export async function updateProjectMemberRole(
 
   return result.rows[0] ?? null;
 }
+
+export async function getProjectMemberById(
+  projectId: string,
+  userId: string
+): Promise<ProjectMember | null> {
+  const result = await pool.query<ProjectMember>(
+    `
+      SELECT
+        member.project_id,
+        member.user_id,
+        project_user.name,
+        project_user.email,
+        CASE
+          WHEN project.owner_id = member.user_id THEN 'owner'
+          ELSE member.role
+        END AS role,
+        member.joined_at
+      FROM project_members AS member
+      INNER JOIN users AS project_user
+        ON project_user.id = member.user_id
+      INNER JOIN projects AS project
+        ON project.id = member.project_id
+      WHERE member.project_id = $1
+        AND member.user_id = $2
+      LIMIT 1
+    `,
+    [projectId, userId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function removeProjectMember(
+  projectId: string,
+  targetUserId: string,
+  actorUserId: string
+): Promise<boolean> {
+  const result = await pool.query(
+    `
+      DELETE FROM project_members AS target
+      USING projects AS project
+      WHERE target.project_id = $1
+        AND target.user_id = $2
+        AND project.id = target.project_id
+        AND project.owner_id <> target.user_id
+        AND (
+          project.owner_id = $3
+          OR (
+            target.role = 'member'
+            AND EXISTS (
+              SELECT 1
+              FROM project_members AS actor
+              WHERE actor.project_id = target.project_id
+                AND actor.user_id = $3
+                AND actor.role = 'admin'
+            )
+          )
+        )
+    `,
+    [projectId, targetUserId, actorUserId]
+  );
+
+  return result.rowCount !== null && result.rowCount > 0;
+}
