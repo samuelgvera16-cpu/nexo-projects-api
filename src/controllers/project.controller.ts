@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { AppError } from "../errors/AppError.js";
 import {
   createProject,
+  deleteProject,
   getProjectByIdForUser,
   getProjectsForUser,
   updateProject,
@@ -79,4 +80,34 @@ export async function updateExistingProject(
   }
 
   return res.json(updatedProject);
+}
+
+export async function deleteExistingProject(
+  req: Request<ProjectParams>,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  const existingProject = await getProjectByIdForUser(
+    req.params.id,
+    req.user.id
+  );
+
+  if (!existingProject) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  if (existingProject.role !== "owner") {
+    throw new AppError("Solo el propietario puede eliminar este proyecto", 403);
+  }
+
+  const deleted = await deleteProject(req.params.id, req.user.id);
+
+  if (!deleted) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  return res.status(204).send();
 }

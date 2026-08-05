@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createNewProject,
+  deleteExistingProject,
   getProject,
   getProjects,
   updateExistingProject,
@@ -28,6 +29,12 @@ router.put(
   validateParams(projectIdParamSchema),
   validateBody(updateProjectSchema),
   updateExistingProject
+);
+
+router.delete(
+  "/:id",
+  validateParams(projectIdParamSchema),
+  deleteExistingProject
 );
 
 router.post("/", validateBody(createProjectSchema), createNewProject);

@@ -173,3 +173,19 @@ export async function updateProject(
 
   return result.rows[0];
 }
+
+export async function deleteProject(
+  projectId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await pool.query(
+    `
+      DELETE FROM projects
+      WHERE id = $1
+        AND owner_id = $2
+    `,
+    [projectId, userId]
+  );
+
+  return result.rowCount !== null && result.rowCount > 0;
+}
