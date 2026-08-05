@@ -7,6 +7,11 @@ interface CreateProjectInput {
   description?: string | null;
 }
 
+interface UpdateProjectInput {
+  name?: string;
+  description?: string | null;
+}
+
 export async function createProject(
   data: CreateProjectInput
 ): Promise<Project> {
@@ -119,4 +124,52 @@ export async function getProjectByIdForUser(
   );
 
   return result.rows[0] ?? null;
+}
+
+export async function updateProject(
+  projectId: string,
+  data: UpdateProjectInput,
+  userId: string
+): Promise<Project | undefined> {
+  const hasDescription = Object.hasOwn(data, "description");
+
+  const result = await pool.query<Project>(
+    `
+      UPDATE projects AS project
+      SET
+        name = COALESCE($2, project.name),
+        description = CASE
+          WHEN $3::boolean THEN $4::text
+          ELSE project.description
+        END,
+        updated_at = NOW()
+      WHERE project.id = $1
+        AND (
+          project.owner_id = $5
+          OR EXISTS (
+            SELECT 1
+            FROM project_members AS member
+            WHERE member.project_id = project.id
+              AND member.user_id = $5
+              AND member.role = 'admin'
+          )
+        )
+      RETURNING
+        project.id,
+        project.owner_id,
+        project.name,
+        project.description,
+        project.created_at,
+        project.updated_at
+    `,
+    [
+      projectId,
+      data.name ?? null,
+      hasDescription,
+      data.description ?? null,
+      userId,
+    ]
+  );
+
+  return result.rows[0];
 }

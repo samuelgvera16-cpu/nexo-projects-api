@@ -4,6 +4,7 @@ import {
   createNewProject,
   getProject,
   getProjects,
+  updateExistingProject,
 } from "../controllers/project.controller.js";
 
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -11,6 +12,7 @@ import { validateBody, validateParams } from "../middleware/validate.js";
 import {
   createProjectSchema,
   projectIdParamSchema,
+  updateProjectSchema,
 } from "../schemas/project.schema.js";
 
 const router = Router();
@@ -20,6 +22,13 @@ router.use(requireAuth);
 router.get("/", getProjects);
 
 router.get("/:id", validateParams(projectIdParamSchema), getProject);
+
+router.put(
+  "/:id",
+  validateParams(projectIdParamSchema),
+  validateBody(updateProjectSchema),
+  updateExistingProject
+);
 
 router.post("/", validateBody(createProjectSchema), createNewProject);
 

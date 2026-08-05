@@ -5,6 +5,7 @@ import {
   createProject,
   getProjectByIdForUser,
   getProjectsForUser,
+  updateProject,
 } from "../services/project.service.js";
 
 type ProjectParams = {
@@ -44,4 +45,38 @@ export async function getProject(req: Request<ProjectParams>, res: Response) {
   }
 
   return res.json(project);
+}
+
+export async function updateExistingProject(
+  req: Request<ProjectParams>,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Autenticación requerida", 401);
+  }
+
+  const existingProject = await getProjectByIdForUser(
+    req.params.id,
+    req.user.id
+  );
+
+  if (!existingProject) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  if (existingProject.role !== "owner" && existingProject.role !== "admin") {
+    throw new AppError("No tienes permiso para actualizar este proyecto", 403);
+  }
+
+  const updatedProject = await updateProject(
+    req.params.id,
+    req.body,
+    req.user.id
+  );
+
+  if (!updatedProject) {
+    throw new AppError("Proyecto no encontrado", 404);
+  }
+
+  return res.json(updatedProject);
 }

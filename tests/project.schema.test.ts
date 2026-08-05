@@ -30,6 +30,15 @@ describe("Project schemas", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects changing ownership during an update", () => {
+    const result = updateProjectSchema.safeParse({
+      name: "Ownership injection",
+      owner_id: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("accepts clearing a project description", () => {
     const result = updateProjectSchema.safeParse({
       description: null,
