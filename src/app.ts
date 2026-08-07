@@ -2,10 +2,11 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
-import { apiRateLimiter } from "./middleware/rateLimit.js";
 
 import { openApiDocument } from "./docs/openapi.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { httpLogger } from "./middleware/httpLogger.js";
+import { apiRateLimiter } from "./middleware/rateLimit.js";
 import authRoutes from "./routes/auth.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import taskRoutes from "./routes/task.routes.js";
@@ -18,6 +19,7 @@ app.use(
   })
 );
 
+app.use(httpLogger);
 app.use(apiRateLimiter);
 app.use(
   express.json({

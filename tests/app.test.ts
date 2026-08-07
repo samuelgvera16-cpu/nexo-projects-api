@@ -4,6 +4,23 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("adds a generated request ID to the response", async () => {
+    const response = await request(app).get("/");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-request-id"]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+  });
+
+  it("preserves a valid incoming request ID", async () => {
+    const response = await request(app)
+      .get("/")
+      .set("X-Request-Id", "portfolio-test-request");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-request-id"]).toBe("portfolio-test-request");
+  });
   it("rejects JSON bodies larger than 100 KB", async () => {
     const response = await request(app)
       .post("/auth/login")
