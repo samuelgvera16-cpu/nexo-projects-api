@@ -32,6 +32,9 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - HTTP security headers with Helmet.
 - Global and authentication-specific IP rate limiting.
 - JSON request bodies limited to 100 KB.
+- Structured JSON logging with Pino.
+- Per-request correlation IDs through the `X-Request-Id` header.
+- Authorization-header and cookie redaction in HTTP logs.
 - UUID route-parameter validation.
 - Parameterized PostgreSQL queries.
 - Centralized application and database error handling.
@@ -52,6 +55,7 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Express
 - Helmet
 - express-rate-limit
+- Pino and pino-http
 - PostgreSQL
 - node-postgres
 - Zod
@@ -102,10 +106,10 @@ nexo-projects-api/
 |   |-- schema.sql           # Complete database schema
 |   `-- seed.sql             # Local demonstration data
 |-- src/
-|   |-- config/              # Environment and PostgreSQL configuration
+|   |-- config/              # Environment, PostgreSQL, and logging configuration
 |   |-- controllers/         # HTTP request handlers
 |   |-- errors/              # Application error types
-|   |-- middleware/          # Authentication, validation, and errors
+|   |-- middleware/          # Authentication, validation, logging, and errors
 |   |-- models/              # TypeScript domain models
 |   |-- routes/              # Authentication, projects, member, and task routes
 |   |-- schemas/             # Zod request schemas
@@ -563,7 +567,7 @@ Unexpected internal errors return a generic response without exposing PostgreSQL
 
 ## Testing
 
-The automated test suite currently includes 54 tests covering:
+The automated test suite currently includes 56 tests covering:
 
 - Root endpoint and unknown-route behavior.
 - Malformed JSON handling.
@@ -580,6 +584,7 @@ The automated test suite currently includes 54 tests covering:
 - Task UUID and update validation.
 - Strict task creation and update schemas.
 - Rejection of client-controlled creator and project fields.
+- Generated and client-provided request correlation IDs.
 
 Run the suite once:
 
@@ -612,6 +617,14 @@ docker build -t nexo-projects-api:ci .
 
 The CI badge at the top of this README shows the current workflow status.
 
+## Structured Logging
+
+The API writes newline-delimited JSON logs to standard output with Pino. HTTP logs include request and response metadata, status codes, response times, and a correlation ID.
+
+Every response includes an `X-Request-Id` header. A valid client-provided identifier of up to 100 characters is preserved; otherwise, the API generates a UUID.
+
+Authorization headers and cookies are redacted from logs. Request bodies are not logged, preventing passwords and other submitted data from being persisted accidentally. Logging is silenced during automated tests.
+
 ## Security Notes
 
 Implemented:
@@ -630,6 +643,8 @@ Implemented:
 - HTTP security headers with Helmet.
 - Global IP rate limiting and stricter authentication limits.
 - JSON request bodies limited to 100 KB.
+- Structured HTTP logs with per-request correlation IDs.
+- Redacted authorization headers and cookies with request bodies excluded from logs.
 - Server-controlled creator identity.
 - Project membership authorization.
 - Owner, admin, and member permissions.
@@ -702,7 +717,7 @@ Required before public production deployment:
 - [x] OpenAPI documentation
 - [x] Docker development environment
 - [x] Rate limiting and security headers
-- [ ] Structured application logging
+- [x] Structured application logging
 - [ ] Cloud deployment
 
 ## License

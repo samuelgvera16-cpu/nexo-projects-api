@@ -1,16 +1,26 @@
 import app from "./app.js";
 import { pool } from "./config/database.js";
 import { env } from "./config/env.js";
+import { logger } from "./config/logger.js";
 
 async function startServer(): Promise<void> {
   try {
     const result = await pool.query("SELECT NOW()");
 
-    console.log("PostgreSQL conectado");
-    console.log("Hora de PostgreSQL:", result.rows[0].now);
+    logger.info(
+      {
+        postgresTime: result.rows[0].now,
+      },
+      "PostgreSQL connected"
+    );
 
     const server = app.listen(env.PORT, () => {
-      console.log(`Servidor iniciado en http://localhost:${env.PORT}`);
+      logger.info(
+        {
+          port: env.PORT,
+        },
+        "Server started"
+      );
     });
 
     let isShuttingDown = false;
@@ -22,7 +32,12 @@ async function startServer(): Promise<void> {
 
       isShuttingDown = true;
 
-      console.log(`Señal ${signal} recibida. Cerrando servidor...`);
+      logger.info(
+        {
+          signal,
+        },
+        "Shutdown signal received"
+      );
 
       try {
         await new Promise<void>((resolve, reject) => {
@@ -38,10 +53,14 @@ async function startServer(): Promise<void> {
 
         await pool.end();
 
-        console.log("Servidor y PostgreSQL cerrados correctamente");
+        logger.info("Server and PostgreSQL closed");
       } catch (error) {
-        console.error("Error durante el cierre del servidor");
-        console.error(error);
+        logger.error(
+          {
+            err: error,
+          },
+          "Server shutdown failed"
+        );
 
         process.exitCode = 1;
       }
@@ -55,16 +74,24 @@ async function startServer(): Promise<void> {
       void shutdown("SIGTERM");
     });
   } catch (error) {
-    console.error("No se pudo conectar a PostgreSQL");
-    console.error(error);
+    logger.fatal(
+      {
+        err: error,
+      },
+      "PostgreSQL connection failed"
+    );
 
     process.exitCode = 1;
 
     try {
       await pool.end();
     } catch (poolError) {
-      console.error("No se pudo cerrar el pool de PostgreSQL");
-      console.error(poolError);
+      logger.error(
+        {
+          err: poolError,
+        },
+        "PostgreSQL pool shutdown failed"
+      );
     }
   }
 }
