@@ -43,6 +43,26 @@ describe("OpenAPI documentation", () => {
     );
   });
 
+  it("documents request-size and rate-limit responses", async () => {
+    const response = await request(app).get("/openapi.json");
+
+    expect(response.status).toBe(200);
+    expect(response.body.components.responses).toHaveProperty(
+      "PayloadTooLarge"
+    );
+    expect(response.body.components.responses).toHaveProperty(
+      "TooManyRequests"
+    );
+    expect(response.body.paths["/auth/register"].post.responses["429"]).toEqual(
+      {
+        $ref: "#/components/responses/TooManyRequests",
+      }
+    );
+    expect(response.body.paths["/auth/login"].post.responses["413"]).toEqual({
+      $ref: "#/components/responses/PayloadTooLarge",
+    });
+  });
+
   it("serves the Swagger UI", async () => {
     const response = await request(app).get("/docs/");
 

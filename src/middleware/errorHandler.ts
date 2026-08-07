@@ -46,6 +46,16 @@ export const notFoundHandler: RequestHandler = (req, res) => {
   });
 };
 
+function isRequestBodyTooLargeError(
+  error: unknown
+): error is Error & { type: string } {
+  return (
+    error instanceof Error &&
+    "type" in error &&
+    error.type === "entity.too.large"
+  );
+}
+
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
@@ -73,6 +83,14 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
 
       return;
     }
+  }
+
+  if (isRequestBodyTooLargeError(error)) {
+    res.status(413).json({
+      message: "Solicitud demasiado grande",
+    });
+
+    return;
   }
 
   console.error(error);
