@@ -39,6 +39,7 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Automated tests with Vitest and Supertest.
 - Interactive OpenAPI 3.1 documentation with Swagger UI.
 - Downloadable OpenAPI JSON specification.
+- Multi-stage Docker image and Docker Compose environment for the API and PostgreSQL.
 - Formatting, linting, type checking, testing, and builds in GitHub Actions.
 
 ## Tech Stack
@@ -52,6 +53,7 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Vitest
 - Supertest
 - OpenAPI 3.1 and Swagger UI
+- Docker and Docker Compose
 - GitHub Actions
 
 ## Architecture
@@ -108,7 +110,10 @@ nexo-projects-api/
 |   |-- app.ts               # Express application
 |   `-- server.ts            # HTTP server lifecycle
 |-- tests/                   # Automated test suite
-|-- .env.example
+|-- .dockerignore            # Docker build exclusions
+|-- .env.example             # Environment variable template
+|-- compose.yaml             # API and PostgreSQL services
+|-- Dockerfile               # Multi-stage production image
 |-- LICENSE
 |-- package.json
 |-- tsconfig.json
@@ -215,6 +220,47 @@ The API will be available at:
 
 ```text
 http://localhost:3000
+```
+
+## Docker Setup
+
+Docker Compose can start the API and PostgreSQL together without requiring a local PostgreSQL configuration.
+
+Requirements:
+
+- Docker Desktop
+- Docker Engine running
+
+Build and start the services:
+
+```bash
+docker compose up -d --build
+```
+
+The containers expose:
+
+- API: `http://localhost:3000`
+- Swagger UI: `http://localhost:3000/docs/`
+- PostgreSQL: `localhost:5433`
+
+Inside the Docker network, the API connects to PostgreSQL through `db:5432`. The database schema and demonstration data are loaded automatically the first time the PostgreSQL volume is created.
+
+Check the container status:
+
+```bash
+docker compose ps
+```
+
+Stop the services while preserving the database volume:
+
+```bash
+docker compose down
+```
+
+To intentionally remove the containers and all Docker database data:
+
+```bash
+docker compose down -v
 ```
 
 ## Interactive API Documentation
@@ -641,7 +687,7 @@ Required before public production deployment:
 ### Production readiness
 
 - [x] OpenAPI documentation
-- [ ] Docker development environment
+- [x] Docker development environment
 - [ ] Rate limiting and security headers
 - [ ] Structured application logging
 - [ ] Cloud deployment

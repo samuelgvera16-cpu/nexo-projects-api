@@ -1,6 +1,6 @@
 -- Local demonstration data only.
--- Authentication is not implemented yet, so password_hash contains
--- a deliberately unusable placeholder value.
+-- Seeded users have deliberately unusable password placeholders and cannot sign in.
+-- Register a new user through the API when testing authentication.
 
 INSERT INTO users (
   id,
