@@ -29,6 +29,9 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Server-controlled task creator identity.
 - Assignee membership validation.
 - Strict request validation with Zod.
+- HTTP security headers with Helmet.
+- Global and authentication-specific IP rate limiting.
+- JSON request bodies limited to 100 KB.
 - UUID route-parameter validation.
 - Parameterized PostgreSQL queries.
 - Centralized application and database error handling.
@@ -47,6 +50,8 @@ Nexo Projects is being developed as a portfolio project to demonstrate backend d
 - Node.js
 - TypeScript
 - Express
+- Helmet
+- express-rate-limit
 - PostgreSQL
 - node-postgres
 - Zod
@@ -558,10 +563,14 @@ Unexpected internal errors return a generic response without exposing PostgreSQL
 
 ## Testing
 
-The automated test suite currently includes 28 tests covering:
+The automated test suite currently includes 54 tests covering:
 
 - Root endpoint and unknown-route behavior.
 - Malformed JSON handling.
+- Oversized JSON rejection with HTTP 413.
+- Helmet security headers.
+- Rate-limit enforcement with HTTP 429 and standard headers.
+- OpenAPI security-response documentation.
 - Authentication request schemas.
 - Email normalization and privilege-injection rejection.
 - Password hashing and timing-safe verification.
@@ -597,6 +606,8 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+docker compose config
+docker build -t nexo-projects-api:ci .
 ```
 
 The CI badge at the top of this README shows the current workflow status.
@@ -616,6 +627,9 @@ Implemented:
 - `Secure` cookies in production mode.
 - Server-side logout and session deletion.
 - Strict runtime request validation.
+- HTTP security headers with Helmet.
+- Global IP rate limiting and stricter authentication limits.
+- JSON request bodies limited to 100 KB.
 - Server-controlled creator identity.
 - Project membership authorization.
 - Owner, admin, and member permissions.
@@ -627,12 +641,11 @@ Implemented:
 
 Required before public production deployment:
 
-- Authentication rate limiting.
-- Security headers.
 - Explicit production CORS policy.
 - CSRF protection appropriate for the frontend deployment.
-- Request-size limits.
 - Production secret management.
+- Shared rate-limit storage for multi-instance deployments.
+- Trusted-proxy configuration for the selected hosting platform.
 - HTTPS termination.
 - Session cleanup scheduling.
 - Security-focused integration testing.
@@ -688,7 +701,7 @@ Required before public production deployment:
 
 - [x] OpenAPI documentation
 - [x] Docker development environment
-- [ ] Rate limiting and security headers
+- [x] Rate limiting and security headers
 - [ ] Structured application logging
 - [ ] Cloud deployment
 

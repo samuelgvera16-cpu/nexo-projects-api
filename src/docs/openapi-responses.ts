@@ -65,6 +65,28 @@ export const openApiResponses = {
     },
   },
 
+  PayloadTooLarge: {
+    description: "Request body exceeds the allowed size",
+    content: {
+      "application/json": {
+        schema: {
+          $ref: "#/components/schemas/Error",
+        },
+      },
+    },
+  },
+
+  TooManyRequests: {
+    description: "Request rate limit exceeded",
+    content: {
+      "application/json": {
+        schema: {
+          $ref: "#/components/schemas/Error",
+        },
+      },
+    },
+  },
+
   InternalServerError: {
     description: "Unexpected server error",
     content: {

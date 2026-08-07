@@ -46,6 +46,12 @@ export const openApiAuthPaths = {
             },
           },
         },
+        "413": {
+          $ref: "#/components/responses/PayloadTooLarge",
+        },
+        "429": {
+          $ref: "#/components/responses/TooManyRequests",
+        },
       },
     },
   },
@@ -105,6 +111,12 @@ export const openApiAuthPaths = {
               },
             },
           },
+        },
+        "413": {
+          $ref: "#/components/responses/PayloadTooLarge",
+        },
+        "429": {
+          $ref: "#/components/responses/TooManyRequests",
         },
       },
     },

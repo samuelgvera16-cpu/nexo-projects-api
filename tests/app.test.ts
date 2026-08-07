@@ -4,6 +4,25 @@ import { describe, expect, it } from "vitest";
 import app from "../src/app.js";
 
 describe("Application routes", () => {
+  it("rejects JSON bodies larger than 100 KB", async () => {
+    const response = await request(app)
+      .post("/auth/login")
+      .send({
+        payload: "a".repeat(101 * 1024),
+      });
+
+    expect(response.status).toBe(413);
+    expect(response.body).toEqual({
+      message: "Solicitud demasiado grande",
+    });
+  });
+  it("adds security headers to API responses", async () => {
+    const response = await request(app).get("/");
+
+    expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    expect(response.headers["x-frame-options"]).toBe("SAMEORIGIN");
+    expect(response.headers["x-powered-by"]).toBeUndefined();
+  });
   it("requires authentication to remove a project member", async () => {
     const response = await request(app).delete(
       "/projects/20000000-0000-4000-8000-000000000001/members/30000000-0000-4000-8000-000000000001"
